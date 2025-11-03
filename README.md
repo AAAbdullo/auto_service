@@ -291,4 +291,316 @@ flutter build appbundle --release
 _Последнее обновление: 19 октября 2025_  
 _Версия: 1.0.0+1_  
 _Статус: Production Ready ✅_
-#
+
+
+
+
+# 🚗 Auto Service - Flutter App with Maps
+
+An application for finding auto repair shops and gas stations with an interactive map and navigation.
+
+## ✨ Latest Update: Map with Navigation ⭐
+
+**Date:** October 19, 2025
+**Status:** ✅ Production Ready
+
+### 🎯 New Features:
+
+* 🗺️ **Interactive map** with 15 auto services and 15 gas stations
+* 🛣️ **Route building** directly on Yandex Map
+* 📱 **Google Maps integration** for navigation
+* 🔍 **Search and filtering** by name and rating
+* 📍 **Geolocation** with current position detection
+* 🎨 **Colored markers**: red (services), green (stations), blue (you)
+
+---
+
+## 🚀 Quick Start
+
+### Installation and launch:
+
+```bash
+# 1. Clone the project (if not yet done)
+git clone <repository-url>
+cd auto_service
+
+# 2. Install dependencies
+flutter clean
+flutter pub get
+
+# 3. Run the app
+flutter run
+```
+
+### Or simply:
+
+```bash
+flutter clean && flutter pub get && flutter run
+```
+
+---
+
+## 📚 Documentation
+
+### 🌟 Start here:
+
+| Document                                         | For whom                    | Reading time |
+| ------------------------------------------------ | --------------------------- | ------------ |
+| **[DOCS_INDEX.md](DOCS_INDEX.md)**               | Navigation through all docs | 2 min        |
+| **[FINAL_SUMMARY.md](FINAL_SUMMARY.md)** ⭐       | Everyone - full overview    | 10 min       |
+| **[QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md)** ⚡ | Quick testing               | 5 min        |
+| **[VISUAL_GUIDE.md](VISUAL_GUIDE.md)** 🎨        | Visual instructions         | 5 min        |
+
+### Full documentation:
+
+* 📖 [MAP_UPDATE_GUIDE.md](MAP_UPDATE_GUIDE.md) - Detailed guide
+* 🔧 [CHANGELOG_MAP.md](CHANGELOG_MAP.md) - Technical changes
+* ✅ [UPDATE_COMPLETE.md](UPDATE_COMPLETE.md) - Work report
+* 🎯 [MAP_UPDATE_README.md](MAP_UPDATE_README.md) - Summary overview
+
+---
+
+## 🎮 How to Use
+
+### 1. First launch
+
+```
+Open the app → Allow geolocation → Done!
+```
+
+### 2. Viewing on the map
+
+* Tap **🔧** on the right to see **red circles** (auto services)
+* Tap **⛽** on the right to see **green circles** (gas stations)
+* **Blue circle** - that’s you!
+
+### 3. Building a route
+
+```
+Tap a circle → Info window opens →
+Tap "Build route" → Blue line appears!
+```
+
+### 4. Navigation
+
+* **On the map** - follow the blue line
+* **In Google Maps** - tap "Open map"
+
+---
+
+## 🛠️ Technologies
+
+### Core technologies:
+
+* **Flutter SDK** ^3.9.2
+* **Dart** ^3.9.2
+
+### Key packages:
+
+* **yandex_mapkit** ^4.2.1 - maps and routes
+* **geolocator** ^13.0.1 - geolocation
+* **url_launcher** ^6.2.5 - external links
+* **easy_localization** ^3.0.8 - localization (RU/UZ)
+* **provider** ^6.1.2 - state management
+
+---
+
+## 📱 App Features
+
+### ✅ Implemented:
+
+#### Map and Navigation:
+
+* [x] Display of 15 auto services on the map
+* [x] Display of 15 gas stations on the map
+* [x] User location detection
+* [x] Route building on Yandex Map
+* [x] Google Maps integration
+* [x] Toggle between services and stations
+* [x] Color-coded markers by type
+
+#### Interface:
+
+* [x] Search by name
+* [x] Filter by rating
+* [x] Detailed point info
+* [x] Dark and light themes
+* [x] Bilingual (Russian/Uzbek)
+
+#### Other sections:
+
+* [x] Authentication & registration
+* [x] Auto parts store
+* [x] Shopping cart
+* [x] Parts booking
+* [x] Order history
+* [x] User profile
+* [x] App settings
+
+---
+
+## 🎨 Color Scheme
+
+| Color        | Element    | Meaning       |
+| ------------ | ---------- | ------------- |
+| 🔴 Red       | Circle 30m | Auto service  |
+| 🟢 Green     | Circle 30m | Gas station   |
+| 🔵 Blue      | Circle 50m | Your location |
+| 🔵 Blue line | Polyline   | Built route   |
+
+---
+
+## 📊 Project Structure
+
+```
+lib/
+├── core/                   # App core
+│   ├── constants/         # Constants, colors, strings
+│   ├── theme/            # App themes
+│   └── utils/            # Utilities
+│
+├── data/                  # Data layer
+│   ├── datasources/      # Data sources
+│   │   ├── demo_services_data.dart      # 15 services
+│   │   └── demo_gas_stations_data.dart  # 15 stations
+│   └── models/           # Data models
+│
+├── presentation/          # Presentation layer
+│   ├── screens/          # Screens
+│   │   ├── home/        # Main map screen ⭐
+│   │   ├── services/    # Services list
+│   │   ├── shop/        # Store
+│   │   ├── profile/     # Profile
+│   │   └── auth/        # Auth
+│   ├── widgets/         # Widgets
+│   └── providers/       # State management
+│
+└── main.dart             # Entry point
+```
+
+---
+
+## 🌍 Localization
+
+Supported languages:
+
+* 🇷🇺 **Russian**
+* 🇺🇿 **O'zbekcha (Uzbek)**
+
+Localization files: `assets/lang/`
+
+---
+
+## 🔧 Development
+
+### Development commands:
+
+```bash
+# Clean project
+flutter clean
+
+# Install dependencies
+flutter pub get
+
+# Run in dev mode
+flutter run
+
+# Run in release mode
+flutter run --release
+
+# Build APK
+flutter build apk --release
+
+# Build App Bundle
+flutter build appbundle --release
+```
+
+### Requirements:
+
+* Flutter SDK ≥ 3.9.2
+* Dart SDK ≥ 3.9.2
+* Android SDK (for Android)
+* Xcode (for iOS)
+
+---
+
+## 📝 Changelog
+
+### Version 1.0.0+1 (October 19, 2025)
+
+* ✨ Added interactive map with Yandex MapKit
+* ✨ Implemented route building
+* ✨ Added Google Maps integration
+* ✨ 15 auto services with coordinates
+* ✨ 15 gas stations with coordinates
+* ✨ Color-coded markers by type
+* ✨ Search and filtering
+* 🐛 Fixed geolocation bugs
+* 📚 Created detailed documentation
+
+More details: [CHANGELOG_MAP.md](CHANGELOG_MAP.md)
+
+---
+
+## 🐛 Known Issues and Fixes
+
+### Location not detected
+
+**Fix:** Enable GPS and allow location access
+
+### Route not building
+
+**Fix:** Check internet connection
+
+### Markers not visible
+
+**Fix:** Zoom in on the map
+
+More: [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) → "If something doesn’t work"
+
+---
+
+## 👥 Contributing
+
+Want to help improve the project? Great!
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a Pull Request
+
+---
+
+## 📄 License
+
+This project is private and intended for educational use only.
+
+---
+
+## 📞 Contacts
+
+For any questions or suggestions, contact the development team.
+
+---
+
+## 🎉 Credits
+
+Thanks to everyone who participated in this project!
+
+---
+
+## 🚀 Ready to Go!
+
+The app is fully functional and production-ready.
+
+**Start with:** [FINAL_SUMMARY.md](FINAL_SUMMARY.md) ⭐
+
+**Quick testing:** [QUICK_TEST_GUIDE.md](QUICK_TEST_GUIDE.md) ⚡
+
+**Visual guide:** [VISUAL_GUIDE.md](VISUAL_GUIDE.md) 🎨
+
+---
+
+*Last update: October 19, 2025*
+*Version: 1.0.0+1*
+*Status: Production Ready ✅*
