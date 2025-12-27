@@ -238,10 +238,13 @@ class _NewProductFormScreenState extends State<NewProductFormScreen> {
     }
 
     final newProduct = ProductModel(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: DateTime.now().millisecondsSinceEpoch,
+      shopId: 1, // Default shop ID, should be obtained from user's shop
       name: name,
+      year: DateTime.now().year,
       description: description,
-      price: price,
+      originalPrice: price,
+      discountPrice: price,
       imageUrl: finalImageUrl,
       rating: 4.5,
       reviewCount: 0,
@@ -294,7 +297,7 @@ class _NewProductFormScreenState extends State<NewProductFormScreen> {
                         border: Border.all(
                           color: Theme.of(
                             context,
-                          ).colorScheme.primary.withOpacity(0.3),
+                          ).colorScheme.primary.withValues(alpha: 0.3),
                           width: 2,
                           style: BorderStyle.solid,
                         ),

@@ -27,7 +27,7 @@ class VoiceService {
 
       // Базовые настройки (язык синхронизируем отдельно)
       await _flutterTts?.setLanguage('ru-RU'); // дефолт
-      await _flutterTts?.setSpeechRate(0.6); // Скорость речи (0.1 - 2.0)
+      await _flutterTts?.setSpeechRate(0.45); // Скорость речи (0.1 - 2.0) - замедлена для лучшего восприятия
       await _flutterTts?.setVolume(1.0); // Громкость (0.0 - 1.0)
       await _flutterTts?.setPitch(1.0); // Высота голоса (0.5 - 2.0)
 

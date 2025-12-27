@@ -63,8 +63,8 @@ class SupportScreen extends StatelessWidget {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       }
+    // ignore: empty_catches
     } catch (e) {
-      print('Ошибка при открытии звонилки: $e');
     }
   }
 

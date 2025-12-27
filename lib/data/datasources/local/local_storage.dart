@@ -59,6 +59,32 @@ class LocalStorage {
     return prefs.getString(phone);
   }
 
+  // ====================== Auth Tokens ======================
+  static const String _keyAccessToken = 'accessToken';
+  static const String _keyRefreshToken = 'refreshToken';
+
+  Future<void> saveAuthToken(String access, String refresh) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyAccessToken, access);
+    await prefs.setString(_keyRefreshToken, refresh);
+  }
+
+  Future<String?> getAccessToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyAccessToken);
+  }
+
+  Future<String?> getRefreshToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyRefreshToken);
+  }
+
+  Future<void> clearAuthToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyAccessToken);
+    await prefs.remove(_keyRefreshToken);
+  }
+
   // ====================== Favorites ======================
   Future<void> addFavorite(String productId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -181,31 +207,13 @@ class LocalStorage {
 
     // Проверим, есть ли у продукта nameKey
     String? nameKey = product.nameKey;
-    if (nameKey!.isEmpty) {
+    if (nameKey == null || nameKey.isEmpty) {
       final found = await _findNameKey(product.name);
       if (found != null) nameKey = found;
     }
 
-    // создаем копию с заполненным nameKey
-    final updatedProduct = ProductModel(
-      id: product.id,
-      name: product.name,
-      nameKey: nameKey,
-      description: product.description,
-      descriptionKey: product.descriptionKey,
-      price: product.price,
-      oldPrice: product.oldPrice,
-      imageUrl: product.imageUrl,
-      rating: product.rating,
-      reviewCount: product.reviewCount,
-      category: product.category,
-      brand: product.brand,
-      inStock: product.inStock,
-      warranty: product.warranty,
-      warrantyKey: product.warrantyKey,
-      features: product.features,
-      quantity: product.quantity,
-    );
+    // создаем копию с заполненным nameKey, используя copyWith
+    final updatedProduct = product.copyWith();
 
     orders.insert(0, updatedProduct); // Добавляем в начало списка
     await saveOrders(orders);
@@ -241,7 +249,7 @@ class LocalStorage {
 
   Future<void> removeReservedPart(String id) async {
     final parts = await getReservedParts() ?? [];
-    parts.removeWhere((item) => item.id == id);
+    parts.removeWhere((item) => item.id.toString() == id);
     await saveReservedParts(parts);
   }
 

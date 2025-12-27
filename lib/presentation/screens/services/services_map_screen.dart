@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 import 'package:auto_service/data/models/auto_service_model.dart';
-import 'package:auto_service/data/models/gas_station_model.dart';
 import 'package:auto_service/presentation/screens/services/service_detail_screen.dart';
 import 'package:auto_service/presentation/providers/theme_provider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -9,16 +8,12 @@ import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
+import 'package:auto_service/core/services/mapkit_driving_service.dart';
 
 class ServicesMapScreen extends StatefulWidget {
   final List<AutoServiceModel> services;
-  final List<GasStationModel>? gasStations;
 
-  const ServicesMapScreen({
-    super.key,
-    required this.services,
-    this.gasStations,
-  });
+  const ServicesMapScreen({super.key, required this.services});
 
   @override
   State<ServicesMapScreen> createState() => _ServicesMapScreenState();
@@ -28,21 +23,18 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
   YandexMapController? _mapController;
   final List<MapObject> _mapObjects = [];
   AutoServiceModel? _selectedService;
-  GasStationModel? _selectedGasStation;
   bool _showServices = true;
-  bool _showGasStations = true;
 
   @override
   void initState() {
     super.initState();
+    // Инициализируем MapKit Driving Service
+    MapKitDrivingService.initialize();
     _initializeMap();
   }
 
   Future<void> _initializeMap() async {
     await _addServiceMarkers();
-    if (widget.gasStations != null) {
-      await _addGasStationMarkers();
-    }
     await _addUserLocationMarker();
 
     // Слушаем изменения темы
@@ -56,7 +48,6 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
     if (_mapController != null) {
       try {
         debugPrint('Setting map theme: ${isDarkMode ? "dark" : "light"}');
-        // TODO: Реализовать когда API будет доступно
       } catch (e) {
         debugPrint('Error setting map theme: $e');
       }
@@ -138,12 +129,10 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       'S',
     );
 
-    for (int i = 0; i < widget.services.length; i++) {
-      final service = widget.services[i];
-
+    for (final service in widget.services) {
       _mapObjects.add(
         PlacemarkMapObject(
-          mapId: MapObjectId('service_$i'),
+          mapId: MapObjectId('service_${service.id}'),
           point: Point(
             latitude: service.latitude,
             longitude: service.longitude,
@@ -159,70 +148,86 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       );
     }
 
+    // Автоматически центрируем карту при инициализации
+    if (_mapObjects.isNotEmpty && _mapController != null) {
+      await _fitMarkers();
+    }
+
     if (mounted) {
       setState(() {});
     }
   }
 
-  Future<void> _addGasStationMarkers() async {
-    if (!_showGasStations || widget.gasStations == null) return;
+  Future<void> _fitMarkers() async {
+    if (_mapObjects.isEmpty || _mapController == null) return;
 
-    final markerIcon = await _createCustomMarker(
-      Icons.local_gas_station,
-      Colors.green,
-      'G',
-    );
+    debugPrint('Fitting camera to ${_mapObjects.length} markers');
 
-    for (int i = 0; i < widget.gasStations!.length; i++) {
-      final station = widget.gasStations![i];
+    double minLat = 90.0, maxLat = -90.0;
+    double minLon = 180.0, maxLon = -180.0;
+    bool hasPoints = false;
 
-      _mapObjects.add(
-        PlacemarkMapObject(
-          mapId: MapObjectId('gas_station_$i'),
-          point: Point(
-            latitude: station.latitude,
-            longitude: station.longitude,
+    for (final obj in _mapObjects) {
+      if (obj is PlacemarkMapObject) {
+        final p = obj.point;
+        if (p.latitude != 0 && p.longitude != 0) {
+          minLat = p.latitude < minLat ? p.latitude : minLat;
+          maxLat = p.latitude > maxLat ? p.latitude : maxLat;
+          minLon = p.longitude < minLon ? p.longitude : minLon;
+          maxLon = p.longitude > maxLon ? p.longitude : maxLon;
+          hasPoints = true;
+        }
+      }
+    }
+
+    if (!hasPoints) return;
+
+    // Если только одна точка, просто перемещаемся к ней
+    if (minLat == maxLat && minLon == maxLon) {
+      await _mapController!.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target: Point(latitude: minLat, longitude: minLon),
+            zoom: 14,
           ),
-          icon: PlacemarkIcon.single(
-            PlacemarkIconStyle(image: markerIcon, scale: 0.8),
-          ),
-          opacity: 1.0,
-          onTap: (PlacemarkMapObject self, Point point) {
-            _onGasStationTap(station);
-          },
+        ),
+        animation: const MapAnimation(
+          type: MapAnimationType.smooth,
+          duration: 1.0,
         ),
       );
+      return;
     }
 
-    if (mounted) {
-      setState(() {});
-    }
+    await _mapController!.moveCamera(
+      CameraUpdate.newGeometry(
+        Geometry.fromBoundingBox(
+          BoundingBox(
+            southWest: Point(latitude: minLat, longitude: minLon),
+            northEast: Point(latitude: maxLat, longitude: maxLon),
+          ),
+        ),
+      ),
+      animation: const MapAnimation(
+        type: MapAnimationType.smooth,
+        duration: 1.0,
+      ),
+    );
   }
 
   void _onServiceTap(AutoServiceModel service) {
     setState(() {
       _selectedService = service;
-      _selectedGasStation = null;
-    });
-  }
-
-  void _onGasStationTap(GasStationModel station) {
-    setState(() {
-      _selectedGasStation = station;
-      _selectedService = null;
     });
   }
 
   Future<void> _toggleMarkers() async {
     _mapObjects.clear();
     await _addServiceMarkers();
-    if (widget.gasStations != null) {
-      await _addGasStationMarkers();
-    }
     await _addUserLocationMarker();
   }
 
-  void _buildRouteToService(AutoServiceModel service) async {
+  Future<void> _buildRouteToService(AutoServiceModel service) async {
     try {
       final userLocation = await _getUserLocation();
 
@@ -232,6 +237,30 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
             SnackBar(
               content: Text('${'route'.tr()}: ${service.name}'),
               backgroundColor: Colors.green,
+            ),
+          );
+        }
+
+        // Удаляем старые маршруты
+        setState(() {
+          _mapObjects.removeWhere(
+            (obj) => obj.mapId.value.startsWith('route_'),
+          );
+        });
+
+        _requestRoutes(
+          Point(
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude,
+          ),
+          Point(latitude: service.latitude, longitude: service.longitude),
+        );
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('location_not_available'.tr()),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -248,21 +277,99 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
     }
   }
 
-  void _buildRouteToGasStation(GasStationModel station) async {
+  Future<void> _requestRoutes(Point from, Point to) async {
     try {
-      final userLocation = await _getUserLocation();
+      // 🎯 Используем нативный Yandex MapKit Driving Router
+      final result = await MapKitDrivingService.buildRoute(
+        startPoint: from,
+        endPoint: to,
+        routesCount: 1,
+      );
 
-      if (userLocation != null) {
+      if (result == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('${'route'.tr()}: ${station.name}'),
-              backgroundColor: Colors.green,
+              content: Text('route_error'.tr()),
+              backgroundColor: Colors.red,
             ),
           );
         }
+        return;
       }
-    } catch (e) {
+
+      // Форматируем расстояние и время
+      final distanceKm = result.distanceKm.toStringAsFixed(1);
+      final durationMin = result.durationWithTrafficMinutes;
+      final distanceMetrics = '$distanceKm км';
+      final durationMetrics = '$durationMin мин';
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${'route'.tr()}: $distanceMetrics, $durationMetrics',
+              style: const TextStyle(color: Colors.white),
+            ),
+            backgroundColor: Colors.blue[700],
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: 'OK',
+              textColor: Colors.white,
+              onPressed: () {},
+            ),
+          ),
+        );
+      }
+
+      setState(() {
+        _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_1');
+        _mapObjects.add(
+          PolylineMapObject(
+            mapId: const MapObjectId('route_1'),
+            polyline: Polyline(points: result.geometryPoints),
+            strokeColor: Colors.blue[700]!,
+            strokeWidth: 5.0,
+            outlineColor: Colors.white,
+            outlineWidth: 1.0,
+          ),
+        );
+      });
+
+      // Zoom to route
+      final points = result.geometryPoints;
+      if (points.isNotEmpty) {
+        double minLat = points.first.latitude;
+        double maxLat = points.first.latitude;
+        double minLon = points.first.longitude;
+        double maxLon = points.first.longitude;
+
+        for (final point in points) {
+          minLat = minLat > point.latitude ? point.latitude : minLat;
+          maxLat = maxLat < point.latitude ? point.latitude : maxLat;
+          minLon = minLon > point.longitude ? point.longitude : minLon;
+          maxLon = maxLon < point.longitude ? point.longitude : maxLon;
+        }
+
+        await _mapController?.moveCamera(
+          CameraUpdate.newGeometry(
+            Geometry.fromBoundingBox(
+              BoundingBox(
+                southWest: Point(latitude: minLat, longitude: minLon),
+                northEast: Point(latitude: maxLat, longitude: maxLon),
+              ),
+            ),
+          ),
+          animation: const MapAnimation(
+            type: MapAnimationType.smooth,
+            duration: 1.0,
+          ),
+        );
+      }
+    } catch (e, stackTrace) {
+      print('❌ Exception building route: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -279,7 +386,11 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       // Проверяем, включены ли службы геолокации
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
       if (!serviceEnabled) {
-        return null;
+        debugPrint(
+          '⚠️ Location services disabled - using Tashkent as fallback for emulator',
+        );
+        // Fallback: координаты Ташкента (для тестирования в эмуляторе)
+        return const Point(latitude: 41.2995, longitude: 69.2401);
       }
 
       // Проверяем/запрашиваем разрешения
@@ -287,12 +398,20 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          return null;
+          debugPrint(
+            '⚠️ Location permission denied - using Tashkent as fallback for emulator',
+          );
+          // Fallback для эмулятора
+          return const Point(latitude: 41.2995, longitude: 69.2401);
         }
       }
 
       if (permission == LocationPermission.deniedForever) {
-        return null;
+        debugPrint(
+          '⚠️ Location permission denied forever - using Tashkent as fallback for emulator',
+        );
+        // Fallback для эмулятора
+        return const Point(latitude: 41.2995, longitude: 69.2401);
       }
 
       // Получаем текущее местоположение с разумным таймаутом
@@ -302,18 +421,26 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       );
 
       return Point(latitude: position.latitude, longitude: position.longitude);
-    } catch (_) {
-      return null;
+    } catch (e) {
+      debugPrint(
+        '⚠️ Location error: $e - using Tashkent as fallback for emulator',
+      );
+      // Fallback при любой ошибке (идеально для эмулятора)
+      return const Point(latitude: 41.2995, longitude: 69.2401);
     }
   }
 
   Future<void> _addUserLocationMarker() async {
     try {
       final location = await _getUserLocation();
-      if (location == null) return;
+      if (location == null) {
+        debugPrint('⚠️ Unable to get user location');
+        return;
+      }
 
       // Загружаем изображение из assets
       final ByteData imageData = await DefaultAssetBundle.of(
+        // ignore: use_build_context_synchronously
         context,
       ).load('assets/icons/geo_position.png');
       final Uint8List imageBytes = imageData.buffer.asUint8List();
@@ -340,6 +467,9 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       if (mounted) {
         setState(() {});
       }
+      debugPrint(
+        '✅ User location marker added at ${location.latitude}, ${location.longitude}',
+      );
     } catch (e) {
       debugPrint('Error adding user location marker: $e');
     }
@@ -350,6 +480,9 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
 
     try {
       final location = await _getUserLocation();
+
+      // С обновленным _getUserLocation(), это практически невозможно,
+      // но оставляем проверку на безопасность
       if (location == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -408,8 +541,6 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
               setState(() {
                 if (value == 'services') {
                   _showServices = !_showServices;
-                } else if (value == 'gas_stations') {
-                  _showGasStations = !_showGasStations;
                 }
               });
               await _toggleMarkers();
@@ -426,18 +557,6 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
                   ],
                 ),
               ),
-              if (widget.gasStations != null)
-                CheckedPopupMenuItem<String>(
-                  value: 'gas_stations',
-                  checked: _showGasStations,
-                  child: Row(
-                    children: [
-                      const Icon(Icons.local_gas_station, color: Colors.green),
-                      const SizedBox(width: 8),
-                      Text('show_gas_stations'.tr()),
-                    ],
-                  ),
-                ),
             ],
           ),
           IconButton(
@@ -448,26 +567,18 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
       ),
       body: Stack(
         children: [
-          Consumer<ThemeProvider>(
-            builder: (context, themeProvider, child) {
-              return YandexMap(
-                mapObjects: _mapObjects,
-                onMapCreated: (YandexMapController controller) {
-                  _mapController = controller;
-                  _setMapTheme(themeProvider.isDarkMode);
-
-                  // Начальную позицию не форсируем; при желании можно центрироваться на геопозиции пользователя
-                },
-                onCameraPositionChanged:
-                    (
-                      CameraPosition position,
-                      CameraUpdateReason reason,
-                      bool finished,
-                    ) {},
-              );
+          YandexMap(
+            mapObjects: _mapObjects,
+            onMapCreated: (YandexMapController controller) async {
+              _mapController = controller;
+              _setMapTheme(context.read<ThemeProvider>().isDarkMode);
+              // После создания контроллера пробуем еще раз подогнать камеру
+              if (_mapObjects.isNotEmpty) {
+                await _fitMarkers();
+              }
             },
           ),
-          if (_selectedService != null)
+          if (_selectedService != null) ...[
             Positioned(
               bottom: 20,
               left: 16,
@@ -540,7 +651,7 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
                               );
 
                               if (result != null &&
-                                  result['action'] == 'build_route') {
+                                  result['buildRoute'] == true) {
                                 _buildRouteToService(_selectedService!);
                               }
                             },
@@ -564,85 +675,7 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
                 ),
               ),
             ),
-          if (_selectedGasStation != null)
-            Positioned(
-              bottom: 20,
-              left: 16,
-              right: 16,
-              child: Card(
-                elevation: 8,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Icon(
-                            Icons.local_gas_station,
-                            color: Colors.green,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _selectedGasStation!.name,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              setState(() {
-                                _selectedGasStation = null;
-                              });
-                            },
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        _selectedGasStation!.description,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 4,
-                        children: _selectedGasStation!.fuelTypes
-                            .map(
-                              (fuel) => Chip(
-                                label: Text(
-                                  fuel,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                backgroundColor: Colors.green.withValues(
-                                  alpha: 0.2,
-                                ),
-                              ),
-                            )
-                            .toList(),
-                      ),
-                      const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () =>
-                            _buildRouteToGasStation(_selectedGasStation!),
-                        icon: const Icon(Icons.directions),
-                        label: Text('route'.tr()),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
+          ],
           // Легенда в правом верхнем углу
           Positioned(
             top: 16,
@@ -665,26 +698,6 @@ class _ServicesMapScreenState extends State<ServicesMapScreen> {
                           const SizedBox(width: 4),
                           Text(
                             'services'.tr(),
-                            style: const TextStyle(fontSize: 12),
-                          ),
-                        ],
-                      ),
-                    if (_showServices &&
-                        _showGasStations &&
-                        widget.gasStations != null)
-                      const SizedBox(height: 4),
-                    if (_showGasStations && widget.gasStations != null)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(
-                            Icons.local_gas_station,
-                            color: Colors.green,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'gas_stations'.tr(),
                             style: const TextStyle(fontSize: 12),
                           ),
                         ],

@@ -1,0 +1,6 @@
+-keep class com.yandex.mapkit.** { *; }
+-keep interface com.yandex.mapkit.** { *; }
+-keep class com.yandex.runtime.** { *; }
+-keep interface com.yandex.runtime.** { *; }
+-keep class com.unact.yandexmapkit.** { *; }
+-keep interface com.unact.yandexmapkit.** { *; }

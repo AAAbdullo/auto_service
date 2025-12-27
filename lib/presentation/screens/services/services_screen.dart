@@ -1,12 +1,13 @@
 import 'package:auto_service/data/models/auto_service_model.dart';
-import 'package:auto_service/data/models/gas_station_model.dart';
-import 'package:auto_service/data/datasources/demo_services_data.dart';
-import 'package:auto_service/data/datasources/demo_gas_stations_data.dart';
+import 'package:auto_service/data/repositories/auto_services_repository.dart';
 import 'package:auto_service/presentation/widgets/custom_search_bar.dart';
 import 'package:auto_service/presentation/screens/services/service_detail_screen.dart';
+import 'package:auto_service/presentation/screens/services/add_service_screen.dart';
 import 'package:auto_service/presentation/screens/services/services_map_screen.dart';
 import 'package:auto_service/main.dart';
+import 'package:auto_service/core/config/api_config.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:easy_localization/easy_localization.dart';
 
 class ServicesScreen extends StatefulWidget {
@@ -19,7 +20,6 @@ class ServicesScreen extends StatefulWidget {
 class _ServicesScreenState extends State<ServicesScreen> {
   List<AutoServiceModel> _services = [];
   List<AutoServiceModel> _allServices = [];
-  List<GasStationModel> _gasStations = [];
   bool _isLoading = false;
 
   // 🔹 Фильтры
@@ -72,18 +72,98 @@ class _ServicesScreenState extends State<ServicesScreen> {
   }
 
   Future<void> _loadServices() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 700));
 
-    // Загружаем демо-данные автосервисов и заправок
-    _allServices = DemoServicesData.getDemoServices();
-    _gasStations = DemoGasStationsData.getDemoGasStations();
+    try {
+      // Пытаемся получить текущее местоположение
+      Position? position;
+      try {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
 
-    _services = List.from(_allServices);
-    _minPriceController.text = _priceRange.start.toInt().toString();
-    _maxPriceController.text = _priceRange.end.toInt().toString();
+        if (permission == LocationPermission.always ||
+            permission == LocationPermission.whileInUse) {
+          position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.low,
+            timeLimit: const Duration(seconds: 3),
+          );
+        }
+      } catch (e) {
+        debugPrint('⚠️ Error getting location in ServicesScreen: $e');
+      }
 
-    setState(() => _isLoading = false);
+      // Используем Ташкент как дефолт, если геолокация недоступна
+      final lat = position?.latitude ?? 41.2995;
+      final lon = position?.longitude ?? 69.2401;
+
+      debugPrint('📍 Loading services for location: $lat, $lon');
+
+      // 🚀 ОПТИМИЗАЦИЯ: загружаем все сервисы параллельно для скорости
+      final nearestFuture = AutoServicesRepository()
+          .getNearestServices(
+            lat: lat,
+            lon: lon,
+            radius: position != null ? 50000 : 500000, // 50км или 500км
+          )
+          .timeout(const Duration(seconds: 10))
+          .catchError((_) => <AutoServiceModel>[]);
+
+      final allServicesFuture = AutoServicesRepository()
+          .getAllServices()
+          .timeout(const Duration(seconds: 10))
+          .catchError((_) => <AutoServiceModel>[]);
+
+      final results = await Future.wait([nearestFuture, allServicesFuture]);
+      List<AutoServiceModel> services = results[0];
+      final allServices = results[1];
+
+      // Если ближайшие не найдены, используем все
+      if (services.isEmpty && allServices.isNotEmpty) {
+        debugPrint('🔍 No nearest services found, using all services...');
+        services = allServices;
+      } else if (services.isEmpty && allServices.isEmpty) {
+        debugPrint('⚠️ No services found at all');
+      }
+
+      if (!mounted) return;
+
+      _allServices = services;
+      _services = List.from(_allServices);
+
+      if (_allServices.isNotEmpty) {
+        _minPriceController.text = _priceRange.start.toInt().toString();
+        _maxPriceController.text = _priceRange.end.toInt().toString();
+      }
+
+      debugPrint('✅ Loaded ${_services.length} services');
+
+      // 🔄 Обновляем главный экран (карту) после загрузки сервисов
+      final mainState = mainScreenKey.currentState;
+      if (mainState != null) {
+        debugPrint('🔄 Обновление главного экрана...');
+        await mainState.refreshHomeServices();
+      }
+    } catch (e) {
+      debugPrint('❌ Error loading services in ServicesScreen: $e');
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to load services: ${e.toString()}'),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      _allServices = [];
+      _services = [];
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _openFilters() {
@@ -458,10 +538,8 @@ class _ServicesScreenState extends State<ServicesScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => ServicesMapScreen(
-                              services: _services,
-                              gasStations: _gasStations,
-                            ),
+                            builder: (_) =>
+                                ServicesMapScreen(services: _services),
                           ),
                         );
                       },
@@ -506,49 +584,47 @@ class _ServicesScreenState extends State<ServicesScreen> {
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : _services.isEmpty
-                  ? Center(child: Text('no_services_found'.tr()))
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: _services.length,
-                      itemBuilder: (context, index) {
-                        final s = _services[index];
-                        return RepaintBoundary(
-                          child: Card(
-                            margin: const EdgeInsets.only(bottom: 10),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                  ? RefreshIndicator(
+                      onRefresh: _loadServices,
+                      child: ListView(
+                        children: [
+                          SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.4,
+                            child: Center(
+                              child: Text('no_services_found'.tr()),
                             ),
-                            elevation: 3,
-                            child: ListTile(
-                              contentPadding: const EdgeInsets.all(12),
-                              leading: CircleAvatar(
-                                backgroundColor: theme.colorScheme.primary
-                                    .withValues(alpha: 0.1),
-                                child: const Icon(Icons.car_repair),
-                              ),
-                              title: Text(
-                                s.name,
-                                style: const TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              subtitle: Text(s.description),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const Icon(
-                                    Icons.star,
-                                    color: Colors.amber,
-                                    size: 18,
-                                  ),
-                                  Text(
-                                    s.rating.toStringAsFixed(1),
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
+                          ),
+                        ],
+                      ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: _loadServices,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        itemCount: _services.length,
+                        itemBuilder: (context, index) {
+                          final s = _services[index];
+
+                          // Get image URL from images array or imageUrl
+                          String? imageUrl;
+                          if (s.images.isNotEmpty) {
+                            // Используем новый метод для получения полного URL
+                            imageUrl = s.images.first.getFullImageUrl();
+                          } else if (s.imageUrl != null &&
+                              s.imageUrl!.isNotEmpty) {
+                            // Fallback на старое поле imageUrl
+                            final baseUrl = ApiConfig.baseUrl;
+                            if (s.imageUrl!.startsWith('http')) {
+                              imageUrl = s.imageUrl;
+                            } else if (s.imageUrl!.startsWith('/')) {
+                              imageUrl = '$baseUrl${s.imageUrl}';
+                            } else {
+                              imageUrl = '$baseUrl/${s.imageUrl}';
+                            }
+                          }
+
+                          return RepaintBoundary(
+                            child: GestureDetector(
                               onTap: () async {
                                 final result = await Navigator.push(
                                   context,
@@ -585,14 +661,195 @@ class _ServicesScreenState extends State<ServicesScreen> {
                                   }
                                 }
                               },
+                              child: Card(
+                                margin: const EdgeInsets.only(bottom: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                elevation: 3,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12),
+                                  child: Row(
+                                    children: [
+                                      // Service Image or Icon
+                                      ClipRRect(
+                                        borderRadius: BorderRadius.circular(8),
+                                        child: SizedBox(
+                                          width: 80,
+                                          height: 80,
+                                          child:
+                                              imageUrl != null &&
+                                                  imageUrl.isNotEmpty
+                                              ? Image.network(
+                                                  imageUrl,
+                                                  fit: BoxFit.cover,
+                                                  errorBuilder: (_, __, ___) {
+                                                    return Container(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: 0.1,
+                                                          ),
+                                                      child: Icon(
+                                                        Icons.car_repair,
+                                                        color: theme
+                                                            .colorScheme
+                                                            .primary,
+                                                      ),
+                                                    );
+                                                  },
+                                                  loadingBuilder:
+                                                      (
+                                                        _,
+                                                        child,
+                                                        loadingProgress,
+                                                      ) {
+                                                        if (loadingProgress ==
+                                                            null) {
+                                                          return child;
+                                                        }
+                                                        return Container(
+                                                          color: theme
+                                                              .colorScheme
+                                                              .primary
+                                                              .withValues(
+                                                                alpha: 0.1,
+                                                              ),
+                                                          child: const Center(
+                                                            child: SizedBox(
+                                                              width: 30,
+                                                              height: 30,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                        );
+                                                      },
+                                                )
+                                              : Container(
+                                                  color: theme
+                                                      .colorScheme
+                                                      .primary
+                                                      .withValues(alpha: 0.1),
+                                                  child: Icon(
+                                                    Icons.car_repair,
+                                                    color: theme
+                                                        .colorScheme
+                                                        .primary,
+                                                    size: 40,
+                                                  ),
+                                                ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      // Service Info
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              s.name,
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 15,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              s.description,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: isDark
+                                                    ? Colors.grey[400]
+                                                    : Colors.grey[600],
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                            const SizedBox(height: 6),
+                                            Row(
+                                              children: [
+                                                const Icon(
+                                                  Icons.star,
+                                                  color: Colors.amber,
+                                                  size: 16,
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  s.rating.toStringAsFixed(1),
+                                                  style: const TextStyle(
+                                                    fontWeight: FontWeight.w600,
+                                                    fontSize: 13,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                if (s.reviewCount != null)
+                                                  Text(
+                                                    '(${s.reviewCount})',
+                                                    style: TextStyle(
+                                                      fontSize: 12,
+                                                      color: isDark
+                                                          ? Colors.grey[500]
+                                                          : Colors.grey[500],
+                                                    ),
+                                                  ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
                     ),
             ),
           ],
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        heroTag: 'add_service_fab',
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const AddServiceScreen()),
+          );
+          // 🎯 После создания сервиса - обновляем список и сразу показываем карту
+          if (result == true) {
+            if (!mounted) return;
+            setState(() => _isLoading = true);
+            try {
+              await _loadServices();
+              if (!mounted) return;
+              // Сразу переходим на карту с обновленным списком и новым сервисом
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ServicesMapScreen(services: _services),
+                ),
+              );
+            } catch (e) {
+              debugPrint('Error navigating to map: $e');
+            } finally {
+              if (mounted) {
+                setState(() => _isLoading = false);
+              }
+            }
+          }
+        },
+        tooltip: 'Add Service',
+        child: const Icon(Icons.add),
       ),
     );
   }

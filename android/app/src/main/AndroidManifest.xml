@@ -23,8 +23,8 @@
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
     <application
-        android:label="Auto Service"
-        android:name="MainApplication"
+        android:label="Auto Makon"
+        android:name="com.example.auto_service.MainApplication"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true">
 
@@ -50,8 +50,8 @@
 
         <!-- API ключ Yandex Maps -->
 <meta-data
-    android:name="com.yandex.mapkit.ApiKey"
-    android:value="20a40c6c-d27c-46b6-b96a-b4b6a4cb47ba"/>
+    android:name="com.yandex.android.runtime.auth.apikey"
+    android:value="21ce4ce6-0677-46c6-9f24-d669e0d8f2ef"/>
 
         <meta-data
             android:name="flutterEmbedding"

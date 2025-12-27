@@ -28,6 +28,15 @@ android {
     buildTypes {
         release {
             signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+        }
+        debug {
+            signingConfig = signingConfigs.getByName("debug")
+            isMinifyEnabled = false
+            isShrinkResources = false
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }
     
@@ -45,7 +54,17 @@ flutter {
     source = "../.."
 }
 
-dependencies {
-    // НЕ добавляйте здесь mapkit вручную!
-    implementation("com.yandex.android:maps.mobile:4.22.0-lite")
+    dependencies {
+    // Force full version of MapKit with Driving support
+    implementation("com.yandex.android:maps.mobile:4.22.0-full")
+}
+
+configurations.all {
+    resolutionStrategy {
+        eachDependency {
+            if (requested.group == "com.yandex.android" && requested.name == "maps.mobile") {
+                useTarget("com.yandex.android:maps.mobile:4.22.0-full")
+            }
+        }
+    }
 }

@@ -30,7 +30,9 @@ class NotificationManager {
     }
 
     final currentUserPhone = _authProvider!.currentUserPhone;
-    if (currentUserPhone == null || !_authProvider!.isServiceEmployee) return;
+    // Раньше уведомления были только для сотрудников.
+    // Теперь backend не разделяет роли, поэтому проверяем только, что пользователь залогинен.
+    if (currentUserPhone == null) return;
 
     final newBookingsCount = _bookingProvider!.getNewBookingsCount(
       currentUserPhone,

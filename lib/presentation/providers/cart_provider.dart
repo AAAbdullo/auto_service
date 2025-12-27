@@ -11,11 +11,11 @@ class CartItem {
 }
 
 class CartProvider with ChangeNotifier {
-  final Map<String, CartItem> _items = {}; // корзина
-  final Map<String, CartItem> _bookedItems = {}; // забронированные детали
+  final Map<int, CartItem> _items = {}; // корзина (изменено на int)
+  final Map<int, CartItem> _bookedItems = {}; // забронированные детали (изменено на int)
 
-  Map<String, CartItem> get items => {..._items};
-  Map<String, CartItem> get bookedItems => {..._bookedItems};
+  Map<int, CartItem> get items => {..._items};
+  Map<int, CartItem> get bookedItems => {..._bookedItems};
 
   int get itemCount => _items.length;
   int get bookedCount => _bookedItems.length;
@@ -27,41 +27,45 @@ class CartProvider with ChangeNotifier {
 
   // --- Корзина ---
   void addItem(ProductModel product) {
+    if (product.id == null) return; // Защита от null
+    
     if (_items.containsKey(product.id)) {
       _items.update(
-        product.id,
+        product.id!,
         (existing) => CartItem(
           product: existing.product,
           quantity: existing.quantity + 1,
         ),
       );
     } else {
-      _items[product.id] = CartItem(product: product, quantity: 1);
+      _items[product.id!] = CartItem(product: product, quantity: 1);
     }
     notifyListeners();
   }
 
   void addItemWithQuantity(ProductModel product, int quantity) {
+    if (product.id == null) return; // Защита от null
+    
     if (_items.containsKey(product.id)) {
       _items.update(
-        product.id,
+        product.id!,
         (existing) => CartItem(
           product: existing.product,
           quantity: existing.quantity + quantity,
         ),
       );
     } else {
-      _items[product.id] = CartItem(product: product, quantity: quantity);
+      _items[product.id!] = CartItem(product: product, quantity: quantity);
     }
     notifyListeners();
   }
 
-  void removeItem(String productId) {
+  void removeItem(int productId) {
     _items.remove(productId);
     notifyListeners();
   }
 
-  void removeSingleItem(String productId) {
+  void removeSingleItem(int productId) {
     if (!_items.containsKey(productId)) return;
     if (_items[productId]!.quantity > 1) {
       _items.update(
@@ -77,15 +81,15 @@ class CartProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void updateQuantity(String productId, int quantity) {
+  void updateQuantity(int productId, int quantity) {
     if (_items.containsKey(productId)) {
       _items[productId]!.quantity = quantity;
       notifyListeners();
     }
   }
 
-  int getQuantity(String productId) => _items[productId]?.quantity ?? 0;
-  bool isInCart(String productId) => _items.containsKey(productId);
+  int getQuantity(int productId) => _items[productId]?.quantity ?? 0;
+  bool isInCart(int productId) => _items.containsKey(productId);
 
   void clear() {
     _items.clear();
@@ -94,23 +98,25 @@ class CartProvider with ChangeNotifier {
 
   // --- Забронированные детали ---
   void bookItem(ProductModel product, int quantity) {
+    if (product.id == null) return; // Защита от null
+    
     if (_bookedItems.containsKey(product.id)) {
       _bookedItems.update(
-        product.id,
+        product.id!,
         (existing) => CartItem(
           product: existing.product,
           quantity: existing.quantity + quantity,
         ),
       );
     } else {
-      _bookedItems[product.id] = CartItem(product: product, quantity: quantity);
+      _bookedItems[product.id!] = CartItem(product: product, quantity: quantity);
     }
     notifyListeners();
   }
 
-  bool isBooked(String productId) => _bookedItems.containsKey(productId);
+  bool isBooked(int productId) => _bookedItems.containsKey(productId);
 
-  void removeBookedItem(String productId) {
+  void removeBookedItem(int productId) {
     _bookedItems.remove(productId);
     notifyListeners();
   }

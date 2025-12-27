@@ -3,13 +3,19 @@ import 'package:easy_localization/easy_localization.dart';
 
 class SuccessNotification {
   static void showOrderSuccess(BuildContext context, String productName) {
+    String message = tr('order_success_message', args: [productName]);
+    // Safety check if translation didn't interpolate
+    if (message.contains('{0}')) {
+      message = message.replaceAll('{0}', productName);
+    }
+
     _showNotification(
       context,
-      title: 'order_success_title'.tr(),
-      message: 'order_success_message'.tr(args: [productName]),
+      title: tr('order_success_title'),
+      message: message,
       icon: Icons.check_circle,
       color: Colors.green,
-      actionText: 'view_orders'.tr(),
+      actionText: tr('view_orders'),
       onAction: () {
         Navigator.pop(context); // Закрываем текущий экран
         // Переходим к заказам через BottomNavigationBar
@@ -19,13 +25,19 @@ class SuccessNotification {
   }
 
   static void showBookingSuccess(BuildContext context, String productName) {
+    String message = tr('booking_success_message', args: [productName]);
+    // Safety check if translation didn't interpolate
+    if (message.contains('{0}')) {
+      message = message.replaceAll('{0}', productName);
+    }
+
     _showNotification(
       context,
-      title: 'booking_success_title'.tr(),
-      message: 'booking_success_message'.tr(args: [productName]),
+      title: tr('booking_success_title'),
+      message: message,
       icon: Icons.bookmark_add,
       color: Colors.blue,
-      actionText: 'view_bookings'.tr(),
+      actionText: tr('view_bookings'),
       onAction: () {
         Navigator.pop(context); // Закрываем текущий экран
         // Переходим к бронированиям через BottomNavigationBar
@@ -55,11 +67,7 @@ class SuccessNotification {
                   color: color.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+                child: Icon(icon, color: color, size: 24),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -94,9 +102,7 @@ class SuccessNotification {
         backgroundColor: Colors.grey[900],
         duration: const Duration(seconds: 4),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         margin: const EdgeInsets.all(16),
         action: SnackBarAction(
           label: actionText,
@@ -109,7 +115,15 @@ class SuccessNotification {
     // Дополнительно показываем диалог с более подробной информацией
     Future.delayed(const Duration(milliseconds: 500), () {
       if (context.mounted) {
-        _showSuccessDialog(context, title, message, icon, color, actionText, onAction);
+        _showSuccessDialog(
+          context,
+          title,
+          message,
+          icon,
+          color,
+          actionText,
+          onAction,
+        );
       }
     });
   }
@@ -154,14 +168,10 @@ class SuccessNotification {
                     color: color.withValues(alpha: 0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: Icon(
-                    icon,
-                    size: 48,
-                    color: color,
-                  ),
+                  child: Icon(icon, size: 48, color: color),
                 ),
                 const SizedBox(height: 20),
-                
+
                 // Заголовок
                 Text(
                   title,
@@ -173,7 +183,7 @@ class SuccessNotification {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                
+
                 // Сообщение
                 Text(
                   message,
@@ -185,7 +195,7 @@ class SuccessNotification {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
-                
+
                 // Кнопки
                 Row(
                   children: [
@@ -242,4 +252,3 @@ class SuccessNotification {
     );
   }
 }
-

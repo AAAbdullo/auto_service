@@ -64,7 +64,9 @@ class ReservedPartsScreen extends StatelessWidget {
                     trailing: IconButton(
                       icon: const Icon(Icons.delete, color: Colors.red),
                       onPressed: () {
-                        bookingProvider.removeBooking(item.id);
+                        bookingProvider.removeBooking(
+                          item.id?.toString() ?? '0',
+                        );
                       },
                     ),
                     onTap: () {

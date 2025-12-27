@@ -38,20 +38,20 @@ dependencies:
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
-  geolocator: ^13.0.1
+  geolocator: ^14.0.2
   shared_preferences: ^2.3.0
   provider: ^6.1.2
   characters: ^1.4.0
   yandex_mapkit: ^4.2.1
   cached_network_image: ^3.4.1
   location: ^8.0.1
-  app_settings: ^5.1.1
+  app_settings: ^7.0.0
   url_launcher: ^6.2.5
   image_picker: ^1.0.7
-  permission_handler: ^11.3.0
+  permission_handler: ^12.0.1
   path_provider: ^2.1.2
   http: ^1.2.2
-  flutter_dotenv: ^5.1.0
+  flutter_dotenv: ^6.0.0
   flutter_tts: ^4.1.0
 
 dev_dependencies:
@@ -115,17 +115,17 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/images/icon_app.png"
+  image_path: "assets/images/logo_fill.png"
   min_sdk_android: 21
   web:
     generate: true
-    image_path: "assets/images/icon_app.png"
+    image_path: "assets/images/logo_fill.png"
   windows:
     generate: true
-    image_path: "assets/images/icon_app.png"
+    image_path: "assets/images/logo_fill.png"
   macos:
     generate: true
-    image_path: "assets/images/icon_app.png"
+    image_path: "assets/images/logo_fill.png"
   linux:
     generate: true
-    image_path: "assets/images/icon_app.png"
+    image_path: "assets/images/logo_fill.png"

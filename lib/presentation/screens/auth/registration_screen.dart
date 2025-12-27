@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:auto_service/main.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -45,24 +46,39 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final success = await authProvider.register(
-      '+998${_phoneController.text.trim()}',
-      _passwordController.text,
-    );
+    final phone = '+998${_phoneController.text.trim()}';
+    final password = _passwordController.text;
 
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
+    final success = await authProvider.register(phone, password);
 
     if (success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('register_success'.tr()),
-          backgroundColor: Colors.green,
-        ),
-      );
-      Navigator.pop(context);
+      // Auto-login after registration
+      final loginSuccess = await authProvider.login(phone, password);
+
+      setState(() => _isLoading = false);
+
+      if (!mounted) return;
+
+      if (loginSuccess) {
+        // Navigate to MainScreen and remove back stack
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+          (route) => false,
+        );
+      } else {
+        // Fallback if login fails but registration succeeded
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('register_success'.tr()),
+            backgroundColor: Colors.green,
+          ),
+        );
+        Navigator.pop(context);
+      }
     } else {
+      setState(() => _isLoading = false);
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('error_user_exists'.tr()),

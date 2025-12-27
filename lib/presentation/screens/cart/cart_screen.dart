@@ -137,7 +137,7 @@ class CartScreen extends StatelessWidget {
                     children: [
                       IconButton(
                         onPressed: () {
-                          cart.removeSingleItem(product.id);
+                          cart.removeSingleItem(product.id ?? 0);
                         },
                         icon: Icon(
                           cartItem.quantity > 1
@@ -178,7 +178,7 @@ class CartScreen extends StatelessWidget {
               children: [
                 IconButton(
                   onPressed: () {
-                    cart.removeItem(product.id);
+                    cart.removeItem(product.id ?? 0);
                   },
                   icon: const Icon(Icons.close, color: Colors.grey),
                 ),

@@ -1,11 +1,21 @@
 class ProductModel {
-  final String id;
+  // API fields
+  final int? id;
+  final int shopId; // API field: shop
+  final int? categoryId; // API field: category
   final String name;
-  final String? nameKey; // Ключ для перевода названия
+  final int year; // API field: year
   final String description;
-  final String? descriptionKey; // Ключ для перевода описания
-  final double price;
-  final double? oldPrice;
+  final String? color; // API field: color
+  final String? model; // API field: model
+  final String? features; // API field: features (text)
+  final String? advantages; // API field: advantages (text)
+  final double originalPrice; // API field: original_price
+  final double discountPrice; // API field: discount_price
+
+  // Legacy fields (для обратной совместимости)
+  final String? nameKey;
+  final String? descriptionKey;
   final String? imageUrl;
   final double rating;
   final int reviewCount;
@@ -13,55 +23,84 @@ class ProductModel {
   final String? brand;
   final bool inStock;
   final String? warranty;
-  final String? warrantyKey; // Ключ для перевода гарантии
-  final List<String> features;
-
-  final int quantity; // <--- добавляем поле количества
-  final String? ownerPhone; // Номер телефона сотрудника, добавившего товар
+  final String? warrantyKey;
+  final List<String> featuresList;
+  final int quantity;
+  final String? ownerPhone;
 
   ProductModel({
-    required this.id,
+    this.id,
+    required this.shopId,
+    this.categoryId,
     required this.name,
-    this.nameKey,
+    required this.year,
     required this.description,
+    this.color,
+    this.model,
+    this.features,
+    this.advantages,
+    required this.originalPrice,
+    required this.discountPrice,
+    // Legacy fields
+    this.nameKey,
     this.descriptionKey,
-    required this.price,
-    this.oldPrice,
     this.imageUrl,
-    required this.rating,
+    this.rating = 0.0,
     this.reviewCount = 0,
-    required this.category,
+    this.category = '',
     this.brand,
     this.inStock = true,
     this.warranty,
     this.warrantyKey,
-    this.features = const [],
-    this.quantity = 1, // по умолчанию 1
-    this.ownerPhone, // Номер телефона владельца товара
+    this.featuresList = const [],
+    this.quantity = 1,
+    this.ownerPhone,
   });
 
+  // Геттеры для удобства
+  double get price => discountPrice;
+  double? get oldPrice => originalPrice > discountPrice ? originalPrice : null;
+
   double? get discountPercentage {
-    if (oldPrice != null && oldPrice! > price) {
-      return ((oldPrice! - price) / oldPrice!) * 100;
+    if (originalPrice > discountPrice) {
+      return ((originalPrice - discountPrice) / originalPrice) * 100;
     }
     return null;
   }
 
-  // Метод для создания копии с изменёнными параметрами
   ProductModel copyWith({
+    int? id,
+    int? shopId,
+    int? categoryId,
+    String? name,
+    int? year,
+    String? description,
+    String? color,
+    String? model,
+    String? features,
+    String? advantages,
+    double? originalPrice,
+    double? discountPrice,
     int? quantity,
-    double? price,
     String? ownerPhone,
     bool? inStock,
   }) {
     return ProductModel(
-      id: id,
-      name: name,
+      id: id ?? this.id,
+      shopId: shopId ?? this.shopId,
+      categoryId: categoryId ?? this.categoryId,
+      name: name ?? this.name,
+      year: year ?? this.year,
+      description: description ?? this.description,
+      color: color ?? this.color,
+      model: model ?? this.model,
+      features: features ?? this.features,
+      advantages: advantages ?? this.advantages,
+      originalPrice: originalPrice ?? this.originalPrice,
+      discountPrice: discountPrice ?? this.discountPrice,
+      // Legacy fields
       nameKey: nameKey,
-      description: description,
       descriptionKey: descriptionKey,
-      price: price ?? this.price,
-      oldPrice: oldPrice,
       imageUrl: imageUrl,
       rating: rating,
       reviewCount: reviewCount,
@@ -70,32 +109,56 @@ class ProductModel {
       inStock: inStock ?? this.inStock,
       warranty: warranty,
       warrantyKey: warrantyKey,
-      features: features,
+      featuresList: featuresList,
       quantity: quantity ?? this.quantity,
       ownerPhone: ownerPhone ?? this.ownerPhone,
     );
   }
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
+    // Поддержка API формата
+    if (json.containsKey('shop')) {
+      return ProductModel(
+        id: json['id'] as int?,
+        shopId: json['shop'] as int,
+        categoryId: json['category'] as int?,
+        name: json['name'] as String,
+        year: json['year'] as int,
+        description: json['description'] as String,
+        color: json['color'] as String?,
+        model: json['model'] as String?,
+        features: json['features'] as String?,
+        advantages: json['advantages'] as String?,
+        originalPrice: _parseDouble(json['original_price']),
+        discountPrice: _parseDouble(json['discount_price']),
+        imageUrl: json['imageUrl'] as String?,
+        rating: _parseDouble(json['rating'] ?? 0.0),
+        reviewCount: json['reviewCount'] as int? ?? 0,
+        category: json['category']?.toString() ?? '',
+        inStock: json['inStock'] as bool? ?? true,
+      );
+    }
+
+    // Поддержка старого формата
     return ProductModel(
-      id: json['id'] as String,
+      id: int.tryParse(json['id']?.toString() ?? ''),
+      shopId: 0, // Default для старого формата
       name: json['name'] as String,
-      nameKey: json['nameKey'] as String?,
+      year: 2024, // Default для старого формата
       description: json['description'] as String,
+      originalPrice: _parseDouble(json['oldPrice'] ?? json['price']),
+      discountPrice: _parseDouble(json['price']),
+      nameKey: json['nameKey'] as String?,
       descriptionKey: json['descriptionKey'] as String?,
-      price: (json['price'] as num).toDouble(),
-      oldPrice: json['oldPrice'] != null
-          ? (json['oldPrice'] as num).toDouble()
-          : null,
       imageUrl: json['imageUrl'] as String?,
-      rating: (json['rating'] as num).toDouble(),
+      rating: _parseDouble(json['rating']),
       reviewCount: json['reviewCount'] as int? ?? 0,
-      category: json['category'] as String,
+      category: json['category'] as String? ?? '',
       brand: json['brand'] as String?,
       inStock: json['inStock'] as bool? ?? true,
       warranty: json['warranty'] as String?,
       warrantyKey: json['warrantyKey'] as String?,
-      features:
+      featuresList:
           (json['features'] as List<dynamic>?)
               ?.map((e) => e as String)
               .toList() ??
@@ -105,26 +168,44 @@ class ProductModel {
     );
   }
 
+  static double _parseDouble(dynamic value) {
+    if (value == null) return 0.0;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 0.0;
+    return 0.0;
+  }
+
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
+      if (id != null) 'id': id,
+      'shop': shopId,
+      if (categoryId != null) 'category': categoryId,
       'name': name,
-      'nameKey': nameKey,
+      'year': year,
       'description': description,
-      'descriptionKey': descriptionKey,
-      'price': price,
-      'oldPrice': oldPrice,
-      'imageUrl': imageUrl,
+      if (color != null) 'color': color,
+      if (model != null) 'model': model,
+      if (features != null) 'features': features,
+      if (advantages != null) 'advantages': advantages,
+      'original_price': originalPrice.toString(),
+      'discount_price': discountPrice.toString(),
+      // Legacy fields
+      if (nameKey != null) 'nameKey': nameKey,
+      if (descriptionKey != null) 'descriptionKey': descriptionKey,
+      'price': discountPrice,
+      if (oldPrice != null) 'oldPrice': oldPrice,
+      if (imageUrl != null) 'imageUrl': imageUrl,
       'rating': rating,
       'reviewCount': reviewCount,
       'category': category,
-      'brand': brand,
+      if (brand != null) 'brand': brand,
       'inStock': inStock,
-      'warranty': warranty,
-      'warrantyKey': warrantyKey,
-      'features': features,
+      if (warranty != null) 'warranty': warranty,
+      if (warrantyKey != null) 'warrantyKey': warrantyKey,
+      'features': featuresList,
       'quantity': quantity,
-      'ownerPhone': ownerPhone,
+      if (ownerPhone != null) 'ownerPhone': ownerPhone,
     };
   }
 }

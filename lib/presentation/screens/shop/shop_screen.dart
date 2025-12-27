@@ -20,66 +20,8 @@ class ShopScreen extends StatelessWidget {
         final cart = context.watch<CartProvider>();
         final productsProvider = context.watch<ProductsProvider>();
 
-        // Демо-товары (базовые)
-        final List<ProductModel> demoProducts = [
-          ProductModel(
-            id: 'demo_1',
-            name: 'brake_pad'.tr(),
-            nameKey: 'brake_pad',
-            price: 250000,
-            description: 'brake_pad_desc'.tr(),
-            descriptionKey: 'brake_pad_desc',
-            warranty: '6_month_warranty',
-            warrantyKey: '6_month_warranty',
-            imageUrl: 'https://picsum.photos/400/300?random=1',
-            brand: 'Auto Service №1',
-            category: 'Remont',
-            rating: 4.7,
-            quantity: 15,
-            inStock: true,
-          ),
-          ProductModel(
-            id: 'demo_2',
-            name: 'engine_oil'.tr(),
-            nameKey: 'engine_oil',
-            price: 120000,
-            description: 'engine_oil_desc'.tr(),
-            descriptionKey: 'engine_oil_desc',
-            warranty: '6_month_warranty',
-            warrantyKey: '6_month_warranty',
-            imageUrl: 'https://picsum.photos/400/300?random=2',
-            brand: 'Auto Shop 24/7',
-            category: 'Dvigatel',
-            rating: 4.7,
-            quantity: 23,
-            inStock: true,
-          ),
-          ProductModel(
-            id: 'demo_3',
-            name: 'battery'.tr(),
-            nameKey: 'battery',
-            price: 550000,
-            description: 'battery_desc'.tr(),
-            descriptionKey: 'battery_desc',
-            warranty: '6_month_warranty',
-            warrantyKey: '6_month_warranty',
-            imageUrl: 'https://picsum.photos/400/300?random=3',
-            brand: 'Servis AvtoPlus',
-            category: 'Dvigatel',
-            rating: 4.7,
-            quantity: 7,
-            inStock: true,
-          ),
-        ];
-
-        // Товары от сотрудников
-        final employeeProducts = productsProvider.getAllProducts();
-
-        // Объединяем все товары
-        final List<ProductModel> products = [
-          ...demoProducts,
-          ...employeeProducts,
-        ];
+        // All products from provider (fetched from API only)
+        final List<ProductModel> products = productsProvider.getAllProducts();
 
         return Scaffold(
           backgroundColor: Theme.of(context).brightness == Brightness.dark
@@ -115,24 +57,30 @@ class ShopScreen extends StatelessWidget {
                       right: 12,
                       top: 8,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(2),
                         decoration: BoxDecoration(
                           color: Colors.red[600],
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.white, width: 2),
+                          shape: cart.itemCount < 10
+                              ? BoxShape.circle
+                              : BoxShape.rectangle,
+                          borderRadius: cart.itemCount >= 10
+                              ? BorderRadius.circular(10)
+                              : null,
+                          border: Border.all(color: Colors.white, width: 1.5),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 20,
-                          minHeight: 20,
+                          minWidth: 18,
+                          minHeight: 18,
                         ),
-                        child: Text(
-                          cart.itemCount.toString(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 11,
-                            fontWeight: FontWeight.bold,
+                        child: Center(
+                          child: Text(
+                            cart.itemCount.toString(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          textAlign: TextAlign.center,
                         ),
                       ),
                     ),
@@ -180,10 +128,12 @@ class ShopScreen extends StatelessWidget {
                 itemCount: products.length,
                 itemBuilder: (context, index) {
                   final productModel = products[index];
-                  final isInCart = cart.isInCart(productModel.id);
+                  final isInCart = cart.isInCart(productModel.id ?? 0);
 
                   return RepaintBoundary(
-                    key: ValueKey(productModel.id),
+                    key: ValueKey(
+                      'product_key_${productModel.id ?? 'temp_${productModel.hashCode}'}',
+                    ),
                     child: _ProductCard(
                       product: productModel,
                       isInCart: isInCart,
@@ -253,7 +203,7 @@ class _ProductCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Hero(
-                    tag: product.id,
+                    tag: 'product_${product.id ?? 'temp_${product.hashCode}'}',
                     child: ProductImageWidget(
                       imageUrl: product.imageUrl,
                       width: double.infinity,

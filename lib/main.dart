@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:auto_service/presentation/providers/booking_provider.dart';
 import 'package:auto_service/presentation/providers/language_provider.dart';
 import 'package:auto_service/presentation/providers/orders_provider.dart';
@@ -14,13 +15,22 @@ import 'package:auto_service/presentation/screens/home/home_screen.dart';
 import 'package:auto_service/presentation/screens/profile/profile_screen.dart';
 import 'package:auto_service/presentation/screens/services/services_screen.dart';
 import 'package:auto_service/presentation/screens/shop/shop_screen.dart';
-import 'package:auto_service/core/config/yandex_config.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
+class MyHttpOverrides extends HttpOverrides {
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    return super.createHttpClient(context)
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+  }
+}
+
 Future<void> main() async {
+  HttpOverrides.global = MyHttpOverrides();
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
   // Загружаем переменные окружения из .env (если файл есть локально)
@@ -29,11 +39,6 @@ Future<void> main() async {
   } catch (_) {
     // Файл может отсутствовать в проде — это нормально
   }
-
-  // Проверяем статус API ключей Яндекса
-  print('🔑 Yandex API Keys Status: ${YandexConfig.configStatus}');
-  print('📍 MapKit Key: ${YandexConfig.mapKitApiKey.substring(0, 8)}...');
-  print('🗺️ Routing Key: ${YandexConfig.routingApiKey.substring(0, 8)}...');
 
   runApp(
     EasyLocalization(
@@ -101,7 +106,7 @@ class MyApp extends StatelessWidget {
               context.read<LanguageProvider>().loadLanguage(context);
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
-                title: 'Auto Service',
+                title: 'Auto Makon',
                 theme: ThemeData.light(),
                 darkTheme: ThemeData.dark(),
                 themeMode: themeProvider.themeMode,
@@ -180,6 +185,14 @@ class MainScreenState extends State<MainScreen> {
         homeState.buildRouteTo(latitude, longitude);
       }
     });
+  }
+
+  /// 🔹 Публичный метод для обновления сервисов на главном экране
+  Future<void> refreshHomeServices() async {
+    final homeState = homeScreenKey.currentState;
+    if (homeState != null) {
+      await homeState.refreshServices();
+    }
   }
 
   @override

@@ -73,7 +73,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 children: [
                   // Изображение товара с Hero анимацией
                   Hero(
-                    tag: widget.product.id,
+                    tag:
+                        'product_detail_${widget.product.id ?? DateTime.now().millisecondsSinceEpoch}',
                     child: ProductImageWidget(
                       imageUrl: widget.product.imageUrl,
                       width: double.infinity,
@@ -469,10 +470,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                             );
                           }
 
-                          // Показываем красивое уведомление пользователю
-                          SuccessNotification.showBookingSuccess(
-                            context,
-                            widget.product.nameKey?.tr() ?? widget.product.name,
+                          // Simple success message as per user request
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('booking_success_simple'.tr()),
+                              backgroundColor: Colors.green,
+                            ),
                           );
                         }
                       },
@@ -511,9 +514,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Наши преимущества',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'our_advantages'.tr(),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Row(
@@ -521,9 +524,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Expanded(
               child: _buildAdvantageCard(
                 icon: Icons.local_shipping,
-                title: 'Free Delivery',
-                description:
-                    'Free delivery on orders over \$100. Fast and reliable shipping across Uzbekistan.',
+                title: 'advantage_free_delivery_title'.tr(),
+                description: 'advantage_free_delivery_desc'.tr(),
                 color: Colors.orange,
               ),
             ),
@@ -531,9 +533,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             Expanded(
               child: _buildAdvantageCard(
                 icon: Icons.build,
-                title: 'Expert Installation',
-                description:
-                    'Professional installation services available. Our certified technicians ensure perfect fit.',
+                title: 'advantage_expert_installation_title'.tr(),
+                description: 'advantage_expert_installation_desc'.tr(),
                 color: Colors.blue,
               ),
             ),
@@ -542,9 +543,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         const SizedBox(height: 12),
         _buildAdvantageCard(
           icon: Icons.verified,
-          title: 'Quality Guarantee',
-          description:
-              'All products come with manufacturer warranty. 30-day return policy on all items.',
+          title: 'advantage_quality_guarantee_title'.tr(),
+          description: 'advantage_quality_guarantee_desc'.tr(),
           color: Colors.green,
           fullWidth: true,
         ),
@@ -627,9 +627,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Payment Methods',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          'payment_methods_title'.tr(),
+          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 16),
         Container(
@@ -672,10 +672,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 ],
               ),
               const SizedBox(height: 16),
-              _buildPaymentMethod('Cash', Colors.green[700]!),
+              _buildPaymentMethod(
+                'payment_method_cash'.tr(),
+                Colors.green[700]!,
+              ),
               const SizedBox(height: 16),
               Text(
-                'We accept all major payment methods. Secure payments guaranteed.',
+                'payment_methods_footer'.tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 12,

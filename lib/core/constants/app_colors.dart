@@ -24,4 +24,22 @@ class AppColors {
   // Контрастные цвета для темной темы
   static const Color textDark = Color(0xFFE0E0E0);
   static const Color textSecondaryDark = Color(0xFFB0B0B0);
+
+  // Neutral Grays
+  static const Color grey50 = Color(0xFFFAFAFA);
+  static const Color grey100 = Color(0xFFF5F5F5);
+  static const Color grey200 = Color(0xFFEEEEEE);
+  static const Color grey300 = Color(0xFFE0E0E0);
+  static const Color grey400 = Color(0xFFBDBDBD);
+  static const Color grey500 = Color(0xFF9E9E9E);
+  static const Color grey600 = Color(0xFF757575);
+  static const Color grey700 = Color(0xFF616161);
+  static const Color grey800 = Color(0xFF424242);
+  static const Color grey900 = Color(0xFF212121);
+
+  // Gradient Colors
+  static const List<Color> primaryGradient = [primary, primaryLight];
+  static const List<Color> secondaryGradient = [secondary, secondaryLight];
+  static const List<Color> successGradient = [success, successLight];
+  static const List<Color> errorGradient = [error, errorLight];
 }

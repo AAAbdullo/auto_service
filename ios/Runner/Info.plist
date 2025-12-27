@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
-	<string>Auto Service</string>
+	<string>Auto Makon</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -13,7 +13,7 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>Auto Service</string>
+	<string>Auto Makon</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -51,7 +51,18 @@
 	<string>Приложению нужен доступ к галерее для выбора фотографий товаров</string>
 	<key>NSPhotoLibraryAddUsageDescription</key>
 	<string>Приложению нужен доступ для сохранения фотографий</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Приложению нужен доступ к геолокации для показа вашего местоположения на карте</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Приложению нужен доступ к геолокации для навигации</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Приложению нужен доступ к геолокации для навигации и показа вашего местоположения</string>
 	<key>YMKApiKey</key>
-	<string>20a40c6c-d27c-46b6-b96a-b4b6a4cb47ba</string>
+	<string>21ce4ce6-0677-46c6-9f24-d669e0d8f2ef</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
 </dict>
 </plist>

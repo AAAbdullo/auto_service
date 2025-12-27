@@ -1,10 +1,8 @@
-import 'dart:io';
 import 'package:auto_service/presentation/providers/auth_providers.dart';
-import 'package:auto_service/presentation/providers/profile_image_provider.dart';
 import 'package:auto_service/presentation/providers/products_provider.dart';
 import 'package:auto_service/presentation/screens/auth/login_screen.dart';
 import 'package:auto_service/presentation/screens/profile/my_orders_screen.dart';
-import 'package:auto_service/presentation/screens/shop/booked_parts_screen.dart';
+
 import 'package:auto_service/presentation/screens/shop/add_product_screen.dart';
 import 'package:auto_service/presentation/screens/shop/employee_bookings_screen.dart';
 import 'package:auto_service/presentation/providers/booking_provider.dart';
@@ -14,7 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:auto_service/core/config/api_config.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -35,9 +33,6 @@ class ProfileScreen extends StatelessWidget {
         final cardColor = theme.brightness == Brightness.dark
             ? Colors.grey[850]
             : Colors.white;
-        final iconBackground = theme.brightness == Brightness.dark
-            ? Colors.blueGrey[700]
-            : const Color(0xFFE3F2FD);
         final textColor = theme.textTheme.bodyLarge?.color ?? Colors.black;
         final subtitleColor = theme.brightness == Brightness.dark
             ? Colors.grey[400]
@@ -48,103 +43,167 @@ class ProfileScreen extends StatelessWidget {
           body: SafeArea(
             child: Column(
               children: [
-                // Шапка профиля
-                Padding(
-                  padding: const EdgeInsets.all(24),
+                // 👤 Profile Header
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 24,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary.withValues(alpha: 0.1),
+                        theme.colorScheme.primary.withValues(alpha: 0.05),
+                      ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                  ),
                   child: Column(
                     children: [
-                      Consumer<ProfileImageProvider>(
-                        builder: (context, profileImageProvider, child) {
-                          return GestureDetector(
-                            onTap: () =>
-                                _showImagePicker(context, profileImageProvider),
-                            child: FutureBuilder<bool>(
-                              future: _checkImageExists(
-                                profileImageProvider.profileImagePath,
-                              ),
-                              builder: (context, snapshot) {
-                                final imageExists = snapshot.data ?? false;
-                                final imagePath =
-                                    profileImageProvider.profileImagePath;
+                      GestureDetector(
+                        onTap: () => _showImagePicker(context, authProvider),
+                        child: Builder(
+                          builder: (context) {
+                            final userProfile = authProvider.userProfile;
+                            final imagePath =
+                                userProfile?.image; // URL from API
 
-                                // 🎨 Более заметный аватар в темной теме
-                                final isDark =
-                                    theme.brightness == Brightness.dark;
-                                final avatarBgColor = isDark
-                                    ? theme.colorScheme.primary.withValues(
-                                        alpha: 0.3,
-                                      )
-                                    : theme.colorScheme.primary.withValues(
-                                        alpha: 0.1,
-                                      );
-                                final avatarIconColor = isDark
-                                    ? Colors.white
-                                    : theme.colorScheme.primary;
+                            final isDark = theme.brightness == Brightness.dark;
+                            final avatarBgColor = isDark
+                                ? theme.colorScheme.primary.withValues(
+                                    alpha: 0.3,
+                                  )
+                                : theme.colorScheme.primary.withValues(
+                                    alpha: 0.1,
+                                  );
+                            final avatarIconColor = isDark
+                                ? Colors.white
+                                : theme.colorScheme.primary;
 
-                                return CircleAvatar(
-                                  radius: 50,
-                                  backgroundColor: avatarBgColor,
-                                  backgroundImage:
-                                      (imageExists && imagePath != null)
-                                      ? FileImage(File(imagePath))
-                                      : null,
-                                  child: (imageExists && imagePath != null)
-                                      ? null
-                                      : Icon(
-                                          Icons.person,
-                                          size: 50,
-                                          color: avatarIconColor,
-                                        ),
+                            ImageProvider? imageProvider;
+                            if (imagePath != null && imagePath.isNotEmpty) {
+                              if (imagePath.startsWith('http')) {
+                                imageProvider = NetworkImage(imagePath);
+                              } else {
+                                imageProvider = NetworkImage(
+                                  '${ApiConfig.baseUrl}$imagePath',
                                 );
-                              },
-                            ),
-                          );
-                        },
+                              }
+                            }
+
+                            return Stack(
+                              children: [
+                                CircleAvatar(
+                                  radius: 55,
+                                  backgroundColor: avatarBgColor,
+                                  backgroundImage: imageProvider,
+                                  child: imageProvider == null
+                                      ? Icon(
+                                          Icons.person,
+                                          size: 55,
+                                          color: avatarIconColor,
+                                        )
+                                      : null,
+                                ),
+                                Positioned(
+                                  bottom: 0,
+                                  right: 0,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.primary,
+                                      shape: BoxShape.circle,
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withValues(
+                                            alpha: 0.2,
+                                          ),
+                                          blurRadius: 8,
+                                        ),
+                                      ],
+                                    ),
+                                    child: const Icon(
+                                      Icons.camera_alt,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                       const SizedBox(height: 16),
                       Row(
-                        mainAxisSize: MainAxisSize.min,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text(
-                            authProvider.currentUserPhone ?? '',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
+                          Column(
+                            children: [
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      authProvider.userProfile?.fullName ??
+                                          authProvider.currentUserPhone ??
+                                          'User',
+                                      style: TextStyle(
+                                        fontSize: 20,
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                  if (authProvider.userProfile?.isSuperuser ==
+                                      true) ...[
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.verified,
+                                      color: Colors.blue,
+                                      size: 20,
+                                    ),
+                                  ],
+                                ],
+                              ),
+                              if (authProvider.userProfile?.fullName != null)
+                                Text(
+                                  authProvider.currentUserPhone ?? '',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: subtitleColor,
+                                  ),
+                                ),
+                            ],
                           ),
-                          // 🔹 Галочка для сотрудников автосервиса
-                          if (authProvider.isServiceEmployee) ...[
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.all(4),
-                              decoration: BoxDecoration(
-                                color: Colors.orange,
-                                shape: BoxShape.circle,
-                              ),
-                              child: const Icon(
-                                Icons.verified,
-                                color: Colors.white,
-                                size: 16,
-                              ),
-                            ),
-                          ],
+                          const SizedBox(width: 12),
+                          IconButton(
+                            icon: const Icon(Icons.edit, size: 20),
+                            color: theme.colorScheme.primary,
+                            onPressed: () =>
+                                _showEditProfileDialog(context, authProvider),
+                          ),
+                          // 🔹 Роль сотрудника больше не разделяется на backend,
+                          // поэтому бейдж отключён, чтобы не вводить в заблуждение.
                         ],
                       ),
-                      const SizedBox(height: 8),
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 8),
 
-                // Скроллируемая часть меню
+                // 📋 Menu Items
                 Expanded(
                   child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     child: Column(
                       children: [
-                        // 🔹 Пункт меню "Добавить товар" - только для сотрудников
-                        if (authProvider.isServiceEmployee)
+                        // 🛍️ Магазин: добавление товаров (только для админов)
+                        if (authProvider.userProfile?.isSuperuser == true)
                           Consumer<ProductsProvider>(
                             builder: (context, productsProvider, _) {
                               final lowStockCount = productsProvider
@@ -166,84 +225,60 @@ class ProfileScreen extends StatelessWidget {
                                   );
                                 },
                                 cardColor: cardColor,
-                                iconBackground: iconBackground,
                                 textColor: textColor,
                                 subtitleColor: subtitleColor,
                               );
                             },
                           ),
 
-                        // 🔹 "Мои заказы" - только для обычных пользователей
-                        if (!authProvider.isServiceEmployee)
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.shopping_bag,
-                            title: 'profile_my_orders'.tr(),
-                            subtitle: 'orders_history'.tr(),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const MyOrdersScreen(),
-                                ),
-                              );
-                            },
-                            cardColor: cardColor,
-                            iconBackground: iconBackground,
-                            textColor: textColor,
-                            subtitleColor: subtitleColor,
-                          ),
+                        // 📦 Мои заказы
+                        _buildMenuItem(
+                          context,
+                          icon: Icons.shopping_bag,
+                          title: 'profile_my_orders'.tr(),
+                          subtitle: 'orders_history'.tr(),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const MyOrdersScreen(),
+                              ),
+                            );
+                          },
+                          cardColor: cardColor,
+                          textColor: textColor,
+                          subtitleColor: subtitleColor,
+                        ),
 
-                        // 🔹 "Забронированные детали" - разные экраны для сотрудников и обычных пользователей
-                        if (authProvider.isServiceEmployee)
-                          Consumer<BookingProvider>(
-                            builder: (context, bookingProvider, _) {
-                              final newBookingsCount = bookingProvider
-                                  .getNewBookingsCount(
-                                    authProvider.currentUserPhone ?? '',
-                                  );
-                              return _buildMenuItemWithBadge(
-                                context,
-                                icon: Icons.bookmark,
-                                title: 'booked_parts'.tr(),
-                                subtitle: 'employee_booked_parts_desc'.tr(),
-                                badgeCount: newBookingsCount,
-                                onTap: () {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) =>
-                                          const EmployeeBookingsScreen(),
-                                    ),
-                                  );
-                                },
-                                cardColor: cardColor,
-                                iconBackground: iconBackground,
-                                textColor: textColor,
-                                subtitleColor: subtitleColor,
-                              );
-                            },
-                          )
-                        else
-                          _buildMenuItem(
-                            context,
-                            icon: Icons.bookmark,
-                            title: 'booked_parts'.tr(),
-                            subtitle: 'reserved_products'.tr(),
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const BookedPartsScreen(),
-                                ),
-                              );
-                            },
-                            cardColor: cardColor,
-                            iconBackground: iconBackground,
-                            textColor: textColor,
-                            subtitleColor: subtitleColor,
-                          ),
+                        // 🔖 Бронирования (Для сотрудников/владельцев) - Backend
+                        Consumer<BookingProvider>(
+                          builder: (context, bookingProvider, _) {
+                            // Мы можем показывать количество новых, если бы API поддерживал это
+                            // Пока просто показываем кнопку
+                            return _buildMenuItem(
+                              context,
+                              icon: Icons.bookmark,
+                              title: 'employee_booked_parts_title'
+                                  .tr(), // "Бронирования (Сотрудник)"
+                              subtitle: 'employee_booked_parts_desc'
+                                  .tr(), // "Входящие бронирования"
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        const EmployeeBookingsScreen(),
+                                  ),
+                                );
+                              },
+                              cardColor: cardColor,
+                              textColor: textColor,
+                              subtitleColor: subtitleColor,
+                            );
+                          },
+                        ),
 
+                        // ⚙️ Settings
                         _buildMenuItem(
                           context,
                           icon: Icons.settings,
@@ -258,11 +293,11 @@ class ProfileScreen extends StatelessWidget {
                             );
                           },
                           cardColor: cardColor,
-                          iconBackground: iconBackground,
                           textColor: textColor,
                           subtitleColor: subtitleColor,
                         ),
 
+                        // ❓ Support
                         _buildMenuItem(
                           context,
                           icon: Icons.help_outline,
@@ -277,7 +312,6 @@ class ProfileScreen extends StatelessWidget {
                             );
                           },
                           cardColor: cardColor,
-                          iconBackground: iconBackground,
                           textColor: textColor,
                           subtitleColor: subtitleColor,
                         ),
@@ -288,7 +322,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Кнопка выхода
+                // 🚪 Logout Button
                 Padding(
                   padding: const EdgeInsets.all(16),
                   child: SizedBox(
@@ -339,19 +373,96 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Future<bool> _checkImageExists(String? imagePath) async {
-    if (imagePath == null) return false;
-    try {
-      final file = File(imagePath);
-      return await file.exists();
-    } catch (e) {
-      return false;
-    }
+  Future<void> _showEditProfileDialog(
+    BuildContext context,
+    AuthProvider authProvider,
+  ) async {
+    final nameController = TextEditingController(
+      text: authProvider.userProfile?.fullName ?? '',
+    );
+    final telegramController = TextEditingController(
+      text: authProvider.userProfile?.telegram ?? '',
+    );
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('edit_profile'.tr()),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: nameController,
+              decoration: InputDecoration(
+                labelText: 'full_name'.tr(),
+                border: const OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: telegramController,
+              decoration: InputDecoration(
+                labelText: 'telegram'.tr(),
+                border: const OutlineInputBorder(),
+                prefixText: '@',
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('cancel'.tr()),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final newName = nameController.text.trim();
+              final newTelegram = telegramController.text.trim();
+
+              if (newName.isNotEmpty) {
+                Navigator.pop(context); // Close dialog
+
+                final data = {'full_name': newName};
+                if (newTelegram.isNotEmpty) {
+                  data['telegram'] = newTelegram;
+                } else {
+                  // If user clears telegram, send null or empty string?
+                  // API spec for Userx says telegram is string, nullable.
+                  data['telegram'] =
+                      ""; // Sending empty string to clear it if backend supports it
+                }
+
+                final success = await authProvider.updateProfile(data);
+
+                if (context.mounted) {
+                  if (success) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('profile_updated'.tr()),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('error_updating_profile'.tr()),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              }
+            },
+            child: Text('save'.tr()),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showImagePicker(
     BuildContext context,
-    ProfileImageProvider profileImageProvider,
+    AuthProvider authProvider,
   ) async {
     showModalBottomSheet(
       context: context,
@@ -377,11 +488,7 @@ class ProfileScreen extends StatelessWidget {
                   label: 'camera'.tr(),
                   onTap: () async {
                     Navigator.pop(context);
-                    await _pickImage(
-                      ImageSource.camera,
-                      profileImageProvider,
-                      context,
-                    );
+                    await _pickImage(ImageSource.camera, authProvider, context);
                   },
                 ),
                 _buildImageOption(
@@ -392,39 +499,22 @@ class ProfileScreen extends StatelessWidget {
                     Navigator.pop(context);
                     await _pickImage(
                       ImageSource.gallery,
-                      profileImageProvider,
+                      authProvider,
                       context,
                     );
                   },
                 ),
-                if (profileImageProvider.profileImagePath != null)
+                // Only show delete if user has image
+                if (authProvider.userProfile?.image != null)
                   _buildImageOption(
                     context,
                     icon: Icons.delete,
                     label: 'remove'.tr(),
                     onTap: () async {
                       Navigator.pop(context);
-                      try {
-                        await profileImageProvider.removeProfileImage();
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('profile_image_removed'.tr()),
-                              backgroundColor: Colors.orange,
-                            ),
-                          );
-                        }
-                      } catch (e) {
-                        debugPrint('Error removing profile image: $e');
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('error_removing_image'.tr()),
-                              backgroundColor: Colors.red,
-                            ),
-                          );
-                        }
-                      }
+                      // Currently API has clean upload, but not explicit delete?
+                      // Usually uploading null or specific call.
+                      // For now, allow upload.
                     },
                   ),
               ],
@@ -468,7 +558,7 @@ class ProfileScreen extends StatelessWidget {
 
   Future<void> _pickImage(
     ImageSource source,
-    ProfileImageProvider profileImageProvider,
+    AuthProvider authProvider,
     BuildContext context,
   ) async {
     try {
@@ -481,26 +571,30 @@ class ProfileScreen extends StatelessWidget {
       );
 
       if (image != null) {
-        // Сохраняем изображение в постоянное хранилище
-        final directory = await getApplicationDocumentsDirectory();
-        final fileName =
-            'profile_image_${DateTime.now().millisecondsSinceEpoch}.jpg';
-        final file = await File(image.path).copy('${directory.path}/$fileName');
+        if (context.mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('uploading_image'.tr())));
+        }
 
-        // Проверяем, что файл действительно создался
-        if (await file.exists()) {
-          await profileImageProvider.setProfileImage(file.path);
+        final success = await authProvider.uploadProfileImage(image.path);
 
-          if (context.mounted) {
+        if (context.mounted) {
+          if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text('profile_image_updated'.tr()),
                 backgroundColor: Colors.green,
               ),
             );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('error_updating_image'.tr()),
+                backgroundColor: Colors.red,
+              ),
+            );
           }
-        } else {
-          throw Exception('Failed to create image file');
         }
       }
     } catch (e) {
@@ -563,47 +657,54 @@ class ProfileScreen extends StatelessWidget {
     required String subtitle,
     required VoidCallback onTap,
     required Color? cardColor,
-    required Color? iconBackground,
     required Color? textColor,
     required Color? subtitleColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ListTile(
         onTap: onTap,
-        leading: Icon(
-          icon,
-          color: Theme.of(context).colorScheme.primary,
-          size: 28,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: Theme.of(context).colorScheme.primary,
+            size: 24,
+          ),
         ),
         title: Text(
           title,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontSize: 15,
             color: textColor,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 13, color: subtitleColor),
+          style: TextStyle(fontSize: 12, color: subtitleColor),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[400]
-              : Colors.grey,
+          color: isDark ? Colors.grey[500] : Colors.grey[400],
         ),
       ),
     );
@@ -617,45 +718,66 @@ class ProfileScreen extends StatelessWidget {
     required int badgeCount,
     required VoidCallback onTap,
     required Color? cardColor,
-    required Color? iconBackground,
     required Color? textColor,
     required Color? subtitleColor,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
         color: cardColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
       child: ListTile(
         onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         leading: Stack(
           clipBehavior: Clip.none,
           children: [
-            Icon(icon, color: Theme.of(context).colorScheme.primary, size: 28),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                icon,
+                color: Theme.of(context).colorScheme.primary,
+                size: 24,
+              ),
+            ),
             if (badgeCount > 0)
               Positioned(
-                right: -8,
-                top: -8,
+                right: -10,
+                top: -10,
                 child: Container(
                   padding: const EdgeInsets.all(4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.red.withValues(alpha: 0.5),
+                        blurRadius: 6,
+                      ),
+                    ],
                   ),
                   constraints: const BoxConstraints(
-                    minWidth: 20,
-                    minHeight: 20,
+                    minWidth: 22,
+                    minHeight: 22,
                   ),
                   child: Center(
                     child: Text(
-                      badgeCount > 9 ? '9+' : badgeCount.toString(),
+                      badgeCount > 99 ? '99+' : badgeCount.toString(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 10,
@@ -671,20 +793,18 @@ class ProfileScreen extends StatelessWidget {
           title,
           style: TextStyle(
             fontWeight: FontWeight.w600,
-            fontSize: 16,
+            fontSize: 15,
             color: textColor,
           ),
         ),
         subtitle: Text(
           subtitle,
-          style: TextStyle(fontSize: 13, color: subtitleColor),
+          style: TextStyle(fontSize: 12, color: subtitleColor),
         ),
         trailing: Icon(
           Icons.arrow_forward_ios,
           size: 16,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey[400]
-              : Colors.grey,
+          color: isDark ? Colors.grey[500] : Colors.grey[400],
         ),
       ),
     );
