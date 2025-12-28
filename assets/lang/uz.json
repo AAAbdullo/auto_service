@@ -96,7 +96,10 @@
   "telegram": "Telegram",
   "edit_profile": "Profilni tahrirlash",
   "full_name": "To'liq ism",
+<<<<<<< HEAD
   "enter_full_name": "To'liq ismni kiriting",
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   "faq_title": "Tez-tez so'raladigan savollar",
   "faq_payment_methods_question": "Qanday to'lov usullari mavjud?",
   "faq_payment_methods_answer": "Biz naqd pul, Payme, Click, Uzcard va Humo orqali to'lovlarni qabul qilamiz.",
@@ -429,7 +432,11 @@
   "payment_methods_title": "To'lov usullari",
   "payment_method_cash": "Naqd pul",
   "payment_methods_footer": "Biz barcha asosiy to'lov turlarini qabul qilamiz. Xavfsizlik kafolatlangan.",
+<<<<<<< HEAD
   "building_route": "Yo'nalish qurilmoqda...",
   "extra_services": "Qo'shimcha xizmatlar",
   "no_categories": "Kategoriyalar topilmadi"
+=======
+  "building_route": "Yo'nalish qurilmoqda..."
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 }

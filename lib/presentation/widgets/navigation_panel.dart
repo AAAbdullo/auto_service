@@ -139,6 +139,7 @@ class NavigationPanel extends StatelessWidget {
     required String value,
     required Color color,
   }) {
+<<<<<<< HEAD
     return Builder(
       builder: (context) {
         final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -165,6 +166,23 @@ class NavigationPanel extends StatelessWidget {
           ],
         );
       },
+=======
+    return Column(
+      children: [
+        Icon(icon, color: color, size: 28),
+        const SizedBox(height: 4),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        const SizedBox(height: 2),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     );
   }
 }

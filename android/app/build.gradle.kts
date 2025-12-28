@@ -40,10 +40,13 @@ android {
         }
     }
     
+<<<<<<< HEAD
     buildFeatures {
         buildConfig = true
     }
     
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17

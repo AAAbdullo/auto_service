@@ -1,6 +1,9 @@
 import 'dart:async';
+<<<<<<< HEAD
 import 'dart:io';
 import 'dart:ui';
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,10 +16,18 @@ import 'package:auto_service/data/repositories/auto_services_repository.dart';
 import 'package:auto_service/presentation/widgets/common/loading_overlay.dart';
 import 'package:auto_service/presentation/widgets/custom_search_bar.dart';
 import 'package:auto_service/core/services/mapkit_routing_service.dart';
+<<<<<<< HEAD
+=======
+import 'package:auto_service/core/services/mapkit_native_routing_service.dart';
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:auto_service/core/services/yandex_router_api_service.dart';
 import 'package:auto_service/core/services/navigation_service.dart';
 import 'package:auto_service/core/services/tts_service.dart';
 import 'package:auto_service/presentation/widgets/navigation_panel.dart';
+<<<<<<< HEAD
+=======
+import 'package:auto_service/presentation/widgets/route_type_selector.dart';
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
 class HomeScreen extends StatefulWidget {
   final double? targetLatitude;
@@ -35,7 +46,11 @@ class HomeScreenState extends State<HomeScreen> {
 
   Point? _currentPosition;
   double _selectedRating = 0.0;
+<<<<<<< HEAD
   final List<String> _selectedCategories = [];
+=======
+  String? _selectedCategory;
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   String _searchQuery = '';
   RouteType _selectedRouteType = RouteType.driving; // Тип маршрута
 
@@ -43,6 +58,7 @@ class HomeScreenState extends State<HomeScreen> {
 
   BitmapDescriptor? _serviceAssetIcon;
 
+<<<<<<< HEAD
   // Категории (используются для фильтрации)
   List<String> get _categories => [
     'diagnostics',
@@ -57,6 +73,8 @@ class HomeScreenState extends State<HomeScreen> {
     'transmission_repair',
   ];
 
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   // Навигация
   final NavigationService _navigationService = NavigationService();
   NavigationState? _navigationState;
@@ -65,6 +83,7 @@ class HomeScreenState extends State<HomeScreen> {
   Timer? _cameraFollowTimer;
   bool _ttsEnabled = true; // TTS включен по умолчанию
 
+<<<<<<< HEAD
   // Умное поведение камеры (как в Яндекс.Картах)
   Timer? _cameraReturnTimer;
   bool _userInteractingWithMap = false;
@@ -82,6 +101,11 @@ class HomeScreenState extends State<HomeScreen> {
             _determinePosition();
           }
         });
+=======
+  @override
+  void initState() {
+    super.initState();
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await _ensureMarkerAssetsLoaded();
       if (mounted) {
@@ -94,15 +118,20 @@ class HomeScreenState extends State<HomeScreen> {
 
   @override
   void dispose() {
+<<<<<<< HEAD
     _serviceStatusStreamSubscription?.cancel();
     _cameraFollowTimer?.cancel();
     _cameraReturnTimer?.cancel();
+=======
+    _cameraFollowTimer?.cancel();
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     _navigationService.stopNavigation();
     super.dispose();
   }
 
   // Метод для построения маршрута (вызывается из main.dart)
   Future<void> buildRouteTo(double latitude, double longitude) async {
+<<<<<<< HEAD
     if (!mounted || _currentPosition == null) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -137,11 +166,55 @@ class HomeScreenState extends State<HomeScreen> {
               throw TimeoutException('Route building timeout');
             },
           );
+=======
+    if (!mounted || _currentPosition == null) return;
+
+    try {
+      // Показываем индикатор загрузки
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('building_route'.tr()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Строим маршрут через нативный SDK
+      RouteResult? result;
+
+      if (_selectedRouteType == RouteType.driving) {
+        // Автомобильный маршрут через нативный SDK
+        final routes = await MapKitNativeRoutingService.buildDrivingRoute(
+          startPoint: _currentPosition!,
+          endPoint: Point(latitude: latitude, longitude: longitude),
+          routesCount: 1,
+        );
+
+        if (routes.isNotEmpty) {
+          result = RouteResult.fromDrivingRoute(routes.first);
+        }
+      } else {
+        // Пешеходный маршрут через нативный SDK
+        final bicycleResult =
+            await MapKitNativeRoutingService.buildWalkingRoute(
+              startPoint: _currentPosition!,
+              endPoint: Point(latitude: latitude, longitude: longitude),
+            );
+
+        if (bicycleResult != null &&
+            bicycleResult.routes != null &&
+            bicycleResult.routes!.isNotEmpty) {
+          result = RouteResult.fromMasstransitRoute(
+            bicycleResult.routes!.first,
+          );
+        }
+      }
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
       if (result == null) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
+<<<<<<< HEAD
               content: Row(
                 children: [
                   const Icon(Icons.error_outline, color: Colors.white),
@@ -156,6 +229,10 @@ class HomeScreenState extends State<HomeScreen> {
                 textColor: Colors.white,
                 onPressed: () => buildRouteTo(latitude, longitude),
               ),
+=======
+              content: Text('route_error'.tr()),
+              backgroundColor: Colors.red,
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             ),
           );
         }
@@ -169,7 +246,11 @@ class HomeScreenState extends State<HomeScreen> {
           _mapObjects.add(
             PolylineMapObject(
               mapId: const MapObjectId('route_line'),
+<<<<<<< HEAD
               polyline: Polyline(points: result.geometryPoints),
+=======
+              polyline: Polyline(points: result!.geometryPoints),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               strokeColor: _getRouteColor(_selectedRouteType),
               strokeWidth: 5.0,
               outlineColor: Colors.white,
@@ -190,6 +271,24 @@ class HomeScreenState extends State<HomeScreen> {
           debugPrint('   С пробками: ${result.durationWithTrafficMinutes} мин');
         });
 
+<<<<<<< HEAD
+=======
+        // Показываем информацию о маршруте
+        final routeInfo = _selectedRouteType == RouteType.driving
+            ? '${result.formattedDistance}, ${result.formattedDurationWithTraffic} (с пробками)'
+            : '${result.formattedDistance}, ${result.formattedDuration}';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_selectedRouteType.emoji} ${'route'.tr()}: $routeInfo',
+            ),
+            backgroundColor: _getRouteColor(_selectedRouteType),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         // Приближаем камеру к маршруту
         if (_mapController != null && result.geometryPoints.isNotEmpty) {
           final points = result.geometryPoints;
@@ -221,6 +320,7 @@ class HomeScreenState extends State<HomeScreen> {
           );
         }
       }
+<<<<<<< HEAD
     } on TimeoutException catch (_) {
       debugPrint('⏱️ Таймаут построения маршрута');
       if (mounted) {
@@ -286,6 +386,15 @@ class HomeScreenState extends State<HomeScreen> {
               textColor: Colors.white,
               onPressed: () => buildRouteTo(latitude, longitude),
             ),
+=======
+    } catch (e) {
+      debugPrint('Ошибка построения маршрута: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('route_error'.tr()),
+            backgroundColor: Colors.red,
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           ),
         );
       }
@@ -336,9 +445,15 @@ class HomeScreenState extends State<HomeScreen> {
       },
     );
 
+<<<<<<< HEAD
     // Запустить таймер для плавного следования камеры (каждые 5 секунд)
     _cameraFollowTimer = Timer.periodic(
       const Duration(seconds: 5), // Очень плавное обновление
+=======
+    // Запустить таймер для плавного следования камеры
+    _cameraFollowTimer = Timer.periodic(
+      const Duration(milliseconds: 500),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       (_) => _updateCameraFollowing(),
     );
   }
@@ -352,12 +467,20 @@ class HomeScreenState extends State<HomeScreen> {
     if (mounted) {
       setState(() {
         _navigationState = null;
+<<<<<<< HEAD
         // НЕ удаляем _currentRoute и _routeDestination!
         // Маршрут остается на карте, пользователь может:
         // - Переключить тип маршрута
         // - Снова начать навигацию
         // - Изучить маршрут
         // Только кнопка "X" (отмена) удаляет маршрут
+=======
+        _currentRoute = null;
+        _routeDestination = null;
+
+        // Удалить линию маршрута
+        _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_line');
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       });
     }
   }
@@ -366,21 +489,29 @@ class HomeScreenState extends State<HomeScreen> {
   void _updateCameraFollowing() {
     if (_mapController == null || !_navigationService.isNavigating) return;
 
+<<<<<<< HEAD
     // Не обновлять камеру, если пользователь взаимодействует с картой
     if (_userInteractingWithMap) return;
 
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     final cameraPos = _navigationService.getFollowingCameraPosition();
     if (cameraPos != null) {
       _mapController!.moveCamera(
         CameraUpdate.newCameraPosition(cameraPos),
         animation: const MapAnimation(
           type: MapAnimationType.smooth,
+<<<<<<< HEAD
           duration: 2.5, // Очень плавная анимация
+=======
+          duration: 0.3,
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         ),
       );
     }
   }
 
+<<<<<<< HEAD
   /// Обработка начала взаимодействия пользователя с картой
   void _onMapTapDown() {
     if (!mounted) return;
@@ -406,6 +537,8 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   Future<void> _ensureMarkerAssetsLoaded() async {
     try {
       if (_serviceAssetIcon == null) {
@@ -468,6 +601,7 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoadingLocation = true);
 
     try {
+<<<<<<< HEAD
       // 1. Проверяем сервис, но НЕ выходим, если выключено.
       // Приложение попытается запросить права, и если пользователь включит GPS позже,
       // сработает StreamSubscription (см. initState).
@@ -476,6 +610,20 @@ class HomeScreenState extends State<HomeScreen> {
         debugPrint(
           '⚠️ Location service is disabled, but continuing to check permissions...',
         );
+=======
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = const Point(
+              latitude: 41.2995,
+              longitude: 69.2401,
+            );
+            _isLoadingLocation = false;
+          });
+        }
+        return;
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
@@ -508,6 +656,7 @@ class HomeScreenState extends State<HomeScreen> {
         return;
       }
 
+<<<<<<< HEAD
       // Включаем слой местоположения после получения разрешения
       if (_mapController != null) {
         try {
@@ -563,6 +712,23 @@ class HomeScreenState extends State<HomeScreen> {
             _isLoadingLocation = false;
           });
         }
+=======
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentPosition = Point(
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+          _isLoadingLocation = false;
+        });
+        _updateMapObjects();
+        _moveToCurrentLocation();
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     } catch (e) {
       debugPrint('Ошибка определения местоположения: $e');
@@ -714,11 +880,18 @@ class HomeScreenState extends State<HomeScreen> {
           builder: (BuildContext context, StateSetter setModalState) {
             return Container(
               padding: const EdgeInsets.all(16),
+<<<<<<< HEAD
               constraints: BoxConstraints(
                 maxHeight: MediaQuery.of(context).size.height * 0.8,
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
+=======
+              height:
+                  MediaQuery.of(context).size.height *
+                  0.5, // Half screen height
+              child: Column(
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Center(
@@ -741,6 +914,7 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(height: 16),
 
+<<<<<<< HEAD
                   Flexible(
                     child: SingleChildScrollView(
                       child: Column(
@@ -801,10 +975,40 @@ class HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
+=======
+                  // Rating Filter
+                  Text(
+                    'rating'.tr(),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 8,
+                    children: [3, 4, 5].map((rating) {
+                      return ChoiceChip(
+                        label: Text('$rating+'),
+                        selected: _selectedRating == rating.toDouble(),
+                        onSelected: (selected) {
+                          setModalState(() {
+                            _selectedRating = selected
+                                ? rating.toDouble()
+                                : 0.0;
+                          });
+                        },
+                      );
+                    }).toList(),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                   ),
 
                   const SizedBox(height: 16),
 
+<<<<<<< HEAD
+=======
+                  // Category Filter (Simplified for now - can be expanded)
+                  // For now we just filter by known categories if needed, or stick to rating as primary filter on map
+                  const Spacer(),
+
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                   // Buttons
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -813,7 +1017,11 @@ class HomeScreenState extends State<HomeScreen> {
                         onPressed: () {
                           setModalState(() {
                             _selectedRating = 0.0;
+<<<<<<< HEAD
                             _selectedCategories.clear();
+=======
+                            _selectedCategory = null;
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                           });
                         },
                         child: Text('clear'.tr()),
@@ -926,6 +1134,7 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _applyFilters() {
+<<<<<<< HEAD
     debugPrint('🔎 Applying filters...');
     debugPrint('   Rating: $_selectedRating');
     debugPrint('   Categories: ${_selectedCategories.join(', ')}');
@@ -966,11 +1175,21 @@ class HomeScreenState extends State<HomeScreen> {
             );
 
         // Search in name or description
+=======
+    setState(() {
+      _filteredServices = _allServices.where((service) {
+        final matchesRating =
+            _selectedRating == 0.0 || service.rating >= _selectedRating;
+        final matchesCategory =
+            _selectedCategory == null ||
+            service.category?.slug == _selectedCategory;
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         final matchesSearch =
             _searchQuery.isEmpty ||
             service.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
             service.description.toLowerCase().contains(
               _searchQuery.toLowerCase(),
+<<<<<<< HEAD
             ) ||
             // Also search in extra services
             (service.extraServices?.any(
@@ -979,12 +1198,18 @@ class HomeScreenState extends State<HomeScreen> {
                   ),
                 ) ??
                 false);
+=======
+            );
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
         return matchesRating && matchesCategory && matchesSearch;
       }).toList();
     });
+<<<<<<< HEAD
 
     debugPrint('✅ Filtered services: ${_filteredServices.length}');
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     _updateMapObjects();
   }
 
@@ -998,6 +1223,7 @@ class HomeScreenState extends State<HomeScreen> {
             onMapCreated: (controller) async {
               _mapController = controller;
 
+<<<<<<< HEAD
               // Включаем слой местоположения, только если есть разрешение
               LocationPermission permission =
                   await Geolocator.checkPermission();
@@ -1009,11 +1235,16 @@ class HomeScreenState extends State<HomeScreen> {
                   debugPrint('Ошибка включения слоя местоположения: $e');
                 }
               }
+=======
+              // Включаем слой местоположения пользователя с встроенными иконками Яндекса
+              await controller.toggleUserLayer(visible: true);
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
               if (_currentPosition != null) {
                 await _moveToCurrentLocation();
               }
             },
+<<<<<<< HEAD
             onCameraPositionChanged: (cameraPosition, reason, finished) {
               // Если камера двигается из-за пользователя (не программно)
               if (reason == CameraUpdateReason.gestures) {
@@ -1025,6 +1256,8 @@ class HomeScreenState extends State<HomeScreen> {
                 }
               }
             },
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           ),
 
           // Поисковая панель
@@ -1044,6 +1277,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
           ),
 
+<<<<<<< HEAD
           // Кнопка "Моя локация" (когда нет маршрута)
           if (_currentRoute == null && _navigationState == null)
             Positioned(
@@ -1389,6 +1623,147 @@ class HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
+=======
+          // Кнопка "Моя локация" (скрывается во время навигации)
+          if (_navigationState == null)
+            Positioned(
+              bottom: _currentRoute != null ? 180 : 120,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'location',
+                onPressed: _moveToCurrentLocation,
+                child: const Icon(Icons.my_location),
+              ),
+            ),
+
+          // Селектор типа маршрута (показывается только после построения маршрута)
+          if (_currentRoute != null && _navigationState == null)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 80,
+              right: 16,
+              child: RouteTypeSelector(
+                selectedType: _selectedRouteType,
+                onTypeSelected: (type) {
+                  setState(() {
+                    _selectedRouteType = type;
+                  });
+
+                  // Перестроить маршрут с новым типом
+                  if (_routeDestination != null) {
+                    buildRouteTo(
+                      _routeDestination!.latitude,
+                      _routeDestination!.longitude,
+                    );
+                  }
+                },
+              ),
+            ),
+
+          // Кнопка "Начать навигацию" (показывается после построения маршрута)
+          if (_currentRoute != null && _navigationState == null)
+            Positioned(
+              bottom: 100,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  // Кнопка начать навигацию
+                  Expanded(
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getRouteColor(_selectedRouteType),
+                            _getRouteColor(_selectedRouteType).withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _startNavigation,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.navigation,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Начать навигацию',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Кнопка отмены маршрута
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _currentRoute = null;
+                            _routeDestination = null;
+                            _mapObjects.removeWhere(
+                              (obj) => obj.mapId.value == 'route_line',
+                            );
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Маршрут отменен'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               ),
             ),
 

@@ -16,7 +16,10 @@ class RegistrationScreen extends StatefulWidget {
 class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
+<<<<<<< HEAD
   final _fullNameController = TextEditingController();
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -26,7 +29,10 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   @override
   void dispose() {
     _phoneController.dispose();
+<<<<<<< HEAD
     _fullNameController.dispose();
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -49,10 +55,16 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final phone = '+998${_phoneController.text.trim()}';
+<<<<<<< HEAD
     final fullName = _fullNameController.text.trim();
     final password = _passwordController.text;
 
     final success = await authProvider.register(phone, password, fullName);
+=======
+    final password = _passwordController.text;
+
+    final success = await authProvider.register(phone, password);
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
     if (success) {
       // Auto-login after registration
@@ -63,11 +75,17 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       if (!mounted) return;
 
       if (loginSuccess) {
+<<<<<<< HEAD
         // Navigate to MainScreen (Profile tab) and remove back stack
         Navigator.of(context).pushAndRemoveUntil(
           MaterialPageRoute(
             builder: (context) => const MainScreen(initialIndex: 3),
           ),
+=======
+        // Navigate to MainScreen and remove back stack
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const MainScreen()),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           (route) => false,
         );
       } else {
@@ -143,6 +161,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: 32),
 
+<<<<<<< HEAD
                 // ФИО
                 TextFormField(
                   controller: _fullNameController,
@@ -173,6 +192,8 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: 16),
 
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 // Телефон с фиксированным +998 через Row
                 Row(
                   children: [

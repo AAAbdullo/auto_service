@@ -15,7 +15,10 @@ import 'package:auto_service/presentation/screens/home/home_screen.dart';
 import 'package:auto_service/presentation/screens/profile/profile_screen.dart';
 import 'package:auto_service/presentation/screens/services/services_screen.dart';
 import 'package:auto_service/presentation/screens/shop/shop_screen.dart';
+<<<<<<< HEAD
 import 'package:auto_service/core/theme/app_theme.dart';
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -53,9 +56,12 @@ Future<void> main() async {
 
 // 🔹 Глобальный ключ для MainScreen
 final GlobalKey<MainScreenState> mainScreenKey = GlobalKey<MainScreenState>();
+<<<<<<< HEAD
 // 🔹 Глобальный ключ для ServicesScreen
 final GlobalKey<ServicesScreenState> servicesScreenKey =
     GlobalKey<ServicesScreenState>();
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -111,8 +117,13 @@ class MyApp extends StatelessWidget {
               return MaterialApp(
                 debugShowCheckedModeBanner: false,
                 title: 'Auto Makon',
+<<<<<<< HEAD
                 theme: AppTheme.lightTheme,
                 darkTheme: AppTheme.darkTheme,
+=======
+                theme: ThemeData.light(),
+                darkTheme: ThemeData.dark(),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 themeMode: themeProvider.themeMode,
                 locale: context.locale,
                 supportedLocales: context.supportedLocales,
@@ -151,19 +162,28 @@ class MyApp extends StatelessWidget {
 }
 
 class MainScreen extends StatefulWidget {
+<<<<<<< HEAD
   final int initialIndex;
   const MainScreen({super.key, this.initialIndex = 0});
+=======
+  const MainScreen({super.key});
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
   @override
   State<MainScreen> createState() => MainScreenState();
 }
 
 class MainScreenState extends State<MainScreen> {
+<<<<<<< HEAD
   late int _selectedIndex;
+=======
+  int _selectedIndex = 0;
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
   // 🔹 Глобальный ключ для HomeScreen
   final GlobalKey<HomeScreenState> homeScreenKey = GlobalKey<HomeScreenState>();
 
+<<<<<<< HEAD
   @override
   void initState() {
     super.initState();
@@ -173,6 +193,11 @@ class MainScreenState extends State<MainScreen> {
   List<Widget> get _screens => [
     HomeScreen(key: homeScreenKey),
     ServicesScreen(key: servicesScreenKey),
+=======
+  List<Widget> get _screens => [
+    HomeScreen(key: homeScreenKey),
+    const ServicesScreen(),
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     const ShopScreen(),
     const ProfileScreen(),
   ];
@@ -180,6 +205,7 @@ class MainScreenState extends State<MainScreen> {
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
+<<<<<<< HEAD
       if (_selectedIndex == 1) {
         // Если перешли на вкладку сервисов - обновляем их
         Future.delayed(const Duration(milliseconds: 100), () {
@@ -190,6 +216,8 @@ class MainScreenState extends State<MainScreen> {
           }
         });
       }
+=======
+>>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     });
   }
 
