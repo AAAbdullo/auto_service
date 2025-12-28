@@ -3,21 +3,14 @@ import 'dart:async';
 import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:auto_service/core/services/yandex_router_api_service.dart';
-<<<<<<< HEAD
 import 'package:auto_service/core/services/mapkit_driving_service.dart';
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
 // Экспортируем типы из yandex_router_api_service для обратной совместимости
 export 'package:auto_service/core/services/yandex_router_api_service.dart'
     show RouteResult, RouteType;
 
 /// Универсальный сервис маршрутизации с поддержкой всех типов транспорта
-<<<<<<< HEAD
 /// Использует Native Yandex MapKit SDK для построения маршрутов
-=======
-/// Использует HTTP API вместо нативного SDK для обхода MissingPluginException
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 class MapKitRoutingService {
   /// Тип маршрута
   static RouteType _currentRouteType = RouteType.driving;
@@ -87,7 +80,6 @@ class MapKitRoutingService {
     Point startPoint,
     Point endPoint,
   ) async {
-<<<<<<< HEAD
     debugPrint('🚗 Построение автомобильного маршрута через Native SDK...');
 
     try {
@@ -113,14 +105,6 @@ class MapKitRoutingService {
       debugPrint('❌ Ошибка при построении маршрута через Native SDK: $e');
       return null;
     }
-=======
-    debugPrint('🚗 Построение автомобильного маршрута через HTTP API...');
-
-    return await YandexRouterApiService.buildDrivingRoute(
-      startPoint: startPoint,
-      endPoint: endPoint,
-    );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   }
 
   /// Построение пешеходного маршрута
@@ -128,7 +112,6 @@ class MapKitRoutingService {
     Point startPoint,
     Point endPoint,
   ) async {
-<<<<<<< HEAD
     debugPrint('🚶 Построение пешеходного маршрута через Native SDK...');
 
     try {
@@ -183,14 +166,6 @@ class MapKitRoutingService {
       debugPrint('❌ Ошибка при построении пешеходного маршрута: $e');
       return null;
     }
-=======
-    debugPrint('🚶 Построение пешеходного маршрута через HTTP API...');
-
-    return await YandexRouterApiService.buildWalkingRoute(
-      startPoint: startPoint,
-      endPoint: endPoint,
-    );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   }
 
   /// Вычисляет расстояние между двумя координатами (формула гаверсинусов)

@@ -31,7 +31,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   void initState() {
     super.initState();
     _service = widget.service;
-<<<<<<< HEAD
     _loadFullServiceDetails();
   }
 
@@ -48,8 +47,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     } catch (e) {
       debugPrint('Error loading full details: $e');
     }
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   }
 
   @override
@@ -196,7 +193,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
             const SizedBox(height: 20),
 
-<<<<<<< HEAD
             // Working Hours & Days Section
             if (_service.startTime != null || _service.workingDays != null)
               _buildSection(
@@ -275,8 +271,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
 
             const SizedBox(height: 20),
 
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             // Services List
             if (_service.services.isNotEmpty)
               _buildSection(
@@ -309,7 +303,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                 ),
               ),
 
-<<<<<<< HEAD
             // Extra Services (Дополнительные услуги)
             if (_service.extraServices != null &&
                 _service.extraServices!.isNotEmpty) ...[
@@ -356,8 +349,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               ),
             ],
 
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             const SizedBox(height: 30),
 
             // Navigation Buttons
@@ -395,10 +386,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   ),
                 ),
                 const SizedBox(width: 12),
-<<<<<<< HEAD
-=======
-
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               ],
             ),
 
@@ -444,12 +431,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildReviewsSection(AuthProvider authProvider) {
-<<<<<<< HEAD
     final isOwner =
         authProvider.isAuthenticated &&
-=======
-    final isOwner = authProvider.isAuthenticated &&
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         authProvider.userProfile?.id != null &&
         _service.ownerId == authProvider.userProfile!.id;
 
@@ -494,24 +477,16 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               isOwner: isOwner,
               onEdit: () => _showEditReviewDialog(review),
               onDelete: () => _deleteReview(review.id),
-<<<<<<< HEAD
               onAddResponse: authProvider.isAuthenticated
                   ? (responseText) =>
                         _addReviewResponse(review.id, responseText)
-=======
-              onAddResponse: isOwner
-                  ? (responseText) => _addReviewResponse(review.id, responseText)
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                   : null,
               onDeleteResponse: isOwner
                   ? (response) => _deleteReviewResponse(response.id)
                   : null,
-<<<<<<< HEAD
               onToggleLike: authProvider.isAuthenticated
                   ? (isLike) => _toggleReviewLike(review.id, isLike)
                   : null,
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             );
           }),
       ],
@@ -523,7 +498,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       final success = await ReviewsRepository().deleteReview(reviewId);
       if (mounted) {
         if (success) {
-<<<<<<< HEAD
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('review_deleted'.tr())));
@@ -532,29 +506,13 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('error_deleting_review'.tr())));
-=======
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('review_deleted'.tr())),
-          );
-          _fetchReviews();
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('error_deleting_review'.tr())),
-          );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         }
       }
     } catch (e) {
       if (mounted) {
-<<<<<<< HEAD
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('error: $e')));
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('error: $e')),
-        );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     }
   }
@@ -565,45 +523,27 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         reviewId: reviewId,
         responseText: responseText,
       );
-<<<<<<< HEAD
-
-=======
-      
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       if (mounted) {
         if (response != null) {
           // Обновляем список отзывов чтобы показать новый ответ
           _fetchReviews();
         } else {
-<<<<<<< HEAD
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('error_adding_response'.tr())));
-=======
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('error_adding_response'.tr())),
-          );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         }
       }
     } catch (e) {
       if (mounted) {
-<<<<<<< HEAD
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('error: $e')));
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('error: $e')),
-        );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     }
   }
 
   Future<void> _deleteReviewResponse(int responseId) async {
     try {
-<<<<<<< HEAD
       final success = await ReviewsRepository().deleteReviewResponse(
         responseId,
       );
@@ -612,14 +552,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text('response_deleted'.tr())));
-=======
-      final success = await ReviewsRepository().deleteReviewResponse(responseId);
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('response_deleted'.tr())),
-          );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           _fetchReviews();
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -629,7 +561,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
       }
     } catch (e) {
       if (mounted) {
-<<<<<<< HEAD
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('error: $e')));
@@ -652,11 +583,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('error: $e')));
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('error: $e')),
-        );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     }
   }
@@ -928,7 +854,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     }
 
     return Column(
-<<<<<<< HEAD
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         if (allImages.isNotEmpty)
@@ -953,29 +878,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
                   );
                 },
               ),
-=======
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        if (allImages.isNotEmpty)
-          SizedBox(
-            height: 200,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: allImages.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 8),
-              itemBuilder: (context, index) {
-                return ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    allImages[index],
-                    width: 300,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.error),
-                  ),
-                );
-              },
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             ),
           ),
 
@@ -1112,7 +1014,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     );
   }
 
-<<<<<<< HEAD
   Widget _buildDayChip(int day, String labelKey, bool isActive) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1152,8 +1053,6 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     );
   }
 
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   Widget _buildContactItem({
     required IconData icon,
     required String label,
@@ -1216,14 +1115,7 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-<<<<<<< HEAD
         SnackBar(content: Text('Ошибка: $e'), backgroundColor: Colors.red),
-=======
-        SnackBar(
-          content: Text('Ошибка: $e'),
-          backgroundColor: Colors.red,
-        ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       );
     }
   }

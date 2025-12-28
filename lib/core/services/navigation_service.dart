@@ -1,8 +1,5 @@
 import 'dart:async';
-<<<<<<< HEAD
 import 'dart:math' as math;
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:geolocator/geolocator.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
 import 'package:flutter/foundation.dart';
@@ -242,11 +239,8 @@ class NavigationService {
 
     // Азимут (направление движения)
     double azimuth = 0.0;
-<<<<<<< HEAD
 
     // Если есть предыдущая позиция и движемся - используем направление движения
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     if (_previousPosition != null && _currentSpeed > 1.0) {
       azimuth = Geolocator.bearingBetween(
         _previousPosition!.latitude,
@@ -254,7 +248,6 @@ class NavigationService {
         _currentPosition!.latitude,
         _currentPosition!.longitude,
       );
-<<<<<<< HEAD
     }
     // Если только начали навигацию - используем направление к первой точке маршрута
     else if (_activeRoute != null && _activeRoute!.geometryPoints.length > 1) {
@@ -285,20 +278,6 @@ class NavigationService {
       zoom: 17.0, // Приближенный вид
       azimuth: azimuth, // Поворот карты по направлению движения
       tilt: 60.0, // Увеличенный наклон для более сильного 3D эффекта
-=======
-    } else if (_currentPosition!.heading > 0) {
-      azimuth = _currentPosition!.heading;
-    }
-
-    return CameraPosition(
-      target: Point(
-        latitude: _currentPosition!.latitude,
-        longitude: _currentPosition!.longitude,
-      ),
-      zoom: 17.0, // Приближенный вид
-      azimuth: azimuth, // Поворот карты по направлению движения
-      tilt: 45.0, // Наклон для 3D вида (как в Яндекс Картах)
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     );
   }
 

@@ -96,10 +96,7 @@
   "telegram": "Telegram",
   "edit_profile": "Редактировать профиль",
   "full_name": "Полное имя",
-<<<<<<< HEAD
   "enter_full_name": "Введите полное имя",
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   "faq_title": "Часто задаваемые вопросы",
   "faq_payment_methods_question": "Какие способы оплаты доступны?",
   "faq_payment_methods_answer": "Мы принимаем наличные, Payme, Click, Uzcard и Humo.",
@@ -440,11 +437,7 @@
   "payment_methods_title": "Способы оплаты",
   "payment_method_cash": "Наличные",
   "payment_methods_footer": "Мы принимаем все основные виды оплаты. Безопасность гарантирована.",
-<<<<<<< HEAD
   "building_route": "Построение маршрута...",
   "extra_services": "Дополнительные услуги",
   "no_categories": "Категории не найдены"
-=======
-  "building_route": "Построение маршрута..."
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 }

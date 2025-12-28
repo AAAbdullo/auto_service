@@ -2,10 +2,6 @@ import 'package:auto_service/data/datasources/remote/auto_services_api_service.d
 import 'package:auto_service/data/datasources/local/local_storage.dart';
 import 'package:auto_service/data/models/auto_service_model.dart';
 import 'package:auto_service/data/datasources/repositories/auth_repositories.dart';
-<<<<<<< HEAD
-=======
-import 'package:auto_service/data/datasources/mock/mock_services_data.dart';
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:flutter/foundation.dart';
 
 class AutoServicesRepository {
@@ -17,21 +13,16 @@ class AutoServicesRepository {
     _authRepository = AuthRepository(_localStorage);
   }
 
-<<<<<<< HEAD
   Future<T> _retryWithRefresh<T>(
     Future<T> Function(String? token) call, {
     bool allowAnonymous = false,
   }) async {
-=======
-  Future<T> _retryWithRefresh<T>(Future<T> Function(String? token) call) async {
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     final token = await _localStorage.getAccessToken();
     try {
       return await call(token);
     } catch (e) {
       debugPrint('❌ API Error: $e');
 
-<<<<<<< HEAD
       if (e.toString().contains('401')) {
         debugPrint('🔑 Token expired, attempting refresh...');
         final newToken = await _authRepository.refreshAccessToken();
@@ -47,31 +38,6 @@ class AutoServicesRepository {
         }
       }
 
-=======
-      // 🎯 Fallback на demo данные если бэкэнд упал
-      if (e.toString().contains('Connection refused') ||
-          e.toString().contains('Connection failed') ||
-          e.toString().contains('SocketException') ||
-          e.toString().contains('HandshakeException') ||
-          e.toString().contains('CERTIFICATE_VERIFY_FAILED') ||
-          e.toString().contains('Failed host lookup')) {
-        debugPrint('⚠️ Backend is unavailable, using demo data...');
-
-        // Возвращаем demo данные вместо null
-        if (T == List<AutoServiceModel>) {
-          return MockServicesData.getDemoServices() as T;
-        }
-      }
-
-      if (e.toString().contains('401')) {
-        print('🔑 Token expired, attempting refresh...');
-        final newToken = await _authRepository.refreshAccessToken();
-        if (newToken != null) {
-          print('🔄 Retry request with new token');
-          return await call(newToken);
-        }
-      }
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       rethrow;
     }
   }
@@ -94,10 +60,7 @@ class AutoServicesRepository {
         address: address,
         token: token,
       ),
-<<<<<<< HEAD
       allowAnonymous: true,
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     );
   }
 
@@ -105,10 +68,7 @@ class AutoServicesRepository {
   Future<AutoServiceModel?> getServiceDetails(int serviceId) async {
     return await _retryWithRefresh(
       (token) => _apiService.getServiceDetails(serviceId, token: token),
-<<<<<<< HEAD
       allowAnonymous: true,
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     );
   }
 
@@ -145,10 +105,7 @@ class AutoServicesRepository {
         pageSize: pageSize,
         token: token,
       ),
-<<<<<<< HEAD
       allowAnonymous: true,
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     );
   }
 
@@ -207,15 +164,7 @@ class AutoServicesRepository {
   Future<List<ServiceCategory>> getServiceCategories() async {
     return await _retryWithRefresh(
       (token) => _apiService.getServiceCategories(token: token),
-<<<<<<< HEAD
       allowAnonymous: true,
     );
-=======
-    ).catchError((_) {
-      // Fallback на demo категории если бэкэнд упал
-      debugPrint('⚠️ Backend unavailable, using demo categories...');
-      return MockServicesData.getDemoCategories();
-    });
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   }
 }

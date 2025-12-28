@@ -11,10 +11,7 @@ class ReviewItemWidget extends StatefulWidget {
   final VoidCallback? onDelete;
   final Function(String responseText)? onAddResponse;
   final Function(ReviewResponse response)? onDeleteResponse;
-<<<<<<< HEAD
   final Function(bool isLike)? onToggleLike;
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
   const ReviewItemWidget({
     super.key,
@@ -25,10 +22,7 @@ class ReviewItemWidget extends StatefulWidget {
     this.onDelete,
     this.onAddResponse,
     this.onDeleteResponse,
-<<<<<<< HEAD
     this.onToggleLike,
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
   });
 
   @override
@@ -51,13 +45,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
-<<<<<<< HEAD
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-=======
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -65,7 +53,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
           children: [
             // Заголовок отзыва
             _buildReviewHeader(),
-<<<<<<< HEAD
 
             const SizedBox(height: 12),
 
@@ -74,16 +61,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
 
             const SizedBox(height: 12),
 
-=======
-            
-            const SizedBox(height: 12),
-            
-            // Рейтинги
-            _buildRatings(),
-            
-            const SizedBox(height: 12),
-            
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             // Заголовок отзыва
             if (widget.review.title.isNotEmpty) ...[
               Text(
@@ -95,7 +72,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               ),
               const SizedBox(height: 8),
             ],
-<<<<<<< HEAD
 
             // Текст отзыва
             Text(
@@ -108,23 +84,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
             // Кнопки действий
             _buildActionButtons(),
 
-=======
-            
-            // Текст отзыва
-            Text(
-              widget.review.comment,
-              style: const TextStyle(
-                fontSize: 14,
-                height: 1.4,
-              ),
-            ),
-            
-            const SizedBox(height: 12),
-            
-            // Кнопки действий
-            _buildActionButtons(),
-            
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             // Ответы на отзыв
             if (widget.review.responses.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -132,11 +91,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               const SizedBox(height: 12),
               ..._buildResponses(),
             ],
-<<<<<<< HEAD
-
-=======
-            
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             // Поле для добавления ответа
             if (_showResponseField) ...[
               const SizedBox(height: 12),
@@ -165,15 +119,9 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
             ),
           ),
         ),
-<<<<<<< HEAD
 
         const SizedBox(width: 12),
 
-=======
-        
-        const SizedBox(width: 12),
-        
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         // Имя и дата
         Expanded(
           child: Column(
@@ -224,32 +172,15 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               const SizedBox(height: 2),
               Text(
                 DateFormat.yMMMd().format(widget.review.createdAt),
-<<<<<<< HEAD
                 style: const TextStyle(color: Colors.grey, fontSize: 12),
-=======
-                style: const TextStyle(
-                  color: Colors.grey,
-                  fontSize: 12,
-                ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               ),
             ],
           ),
         ),
-<<<<<<< HEAD
 
         // Общий рейтинг
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-=======
-        
-        // Общий рейтинг
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 6,
-          ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           decoration: BoxDecoration(
             color: _getRatingColor(widget.review.overallRating),
             borderRadius: BorderRadius.circular(8),
@@ -257,15 +188,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-<<<<<<< HEAD
               const Icon(Icons.star, size: 16, color: Colors.white),
-=======
-              const Icon(
-                Icons.star,
-                size: 16,
-                color: Colors.white,
-              ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               const SizedBox(width: 4),
               Text(
                 widget.review.overallRating.toString(),
@@ -278,11 +201,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
             ],
           ),
         ),
-<<<<<<< HEAD
-
-=======
-        
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         // Меню действий
         if (widget.isMyReview || widget.isOwner)
           PopupMenuButton<String>(
@@ -313,14 +231,10 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                     children: [
                       const Icon(Icons.delete, size: 18, color: Colors.red),
                       const SizedBox(width: 8),
-<<<<<<< HEAD
                       Text(
                         'delete'.tr(),
                         style: const TextStyle(color: Colors.red),
                       ),
-=======
-                      Text('delete'.tr(), style: const TextStyle(color: Colors.red)),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                     ],
                   ),
                 ),
@@ -344,7 +258,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
   }
 
   Widget _buildRatingChip(String label, int rating) {
-<<<<<<< HEAD
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -356,21 +269,12 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
         border: Border.all(
           color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
         ),
-=======
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: Colors.grey[300]!),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
             label,
-<<<<<<< HEAD
             style: TextStyle(
               fontSize: 11,
               color: isDark ? Colors.grey[400] : Colors.grey[600],
@@ -378,16 +282,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
           ),
           const SizedBox(width: 4),
           Icon(Icons.star, size: 12, color: _getRatingColor(rating)),
-=======
-            style: const TextStyle(fontSize: 11, color: Colors.grey),
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.star,
-            size: 12,
-            color: _getRatingColor(rating),
-          ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           const SizedBox(width: 2),
           Text(
             rating.toString(),
@@ -407,7 +301,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
       children: [
         // Лайки
         TextButton.icon(
-<<<<<<< HEAD
           onPressed: widget.onToggleLike != null
               ? () => widget.onToggleLike!(true)
               : null,
@@ -422,36 +315,17 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               color: widget.review.userLike ? Colors.blue : null,
             ),
           ),
-=======
-          onPressed: () {
-            // TODO: Implement like functionality
-          },
-          icon: Icon(
-            widget.review.userLike ? Icons.thumb_up : Icons.thumb_up_outlined,
-            size: 16,
-          ),
-          label: Text('${widget.review.likesCount}'),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           style: TextButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 8),
             minimumSize: const Size(0, 32),
           ),
         ),
-<<<<<<< HEAD
 
         // Дизлайки
         TextButton.icon(
           onPressed: widget.onToggleLike != null
               ? () => widget.onToggleLike!(false)
               : null,
-=======
-        
-        // Дизлайки
-        TextButton.icon(
-          onPressed: () {
-            // TODO: Implement dislike functionality
-          },
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           icon: const Icon(Icons.thumb_down_outlined, size: 16),
           label: Text('${widget.review.dislikesCount}'),
           style: TextButton.styleFrom(
@@ -459,19 +333,11 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
             minimumSize: const Size(0, 32),
           ),
         ),
-<<<<<<< HEAD
 
         const Spacer(),
 
         // Кнопка ответа (для всех авторизованных пользователей)
         if (widget.onAddResponse != null)
-=======
-        
-        const Spacer(),
-        
-        // Кнопка ответа (только для владельца сервиса)
-        if (widget.isOwner && widget.onAddResponse != null)
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           TextButton.icon(
             onPressed: () {
               setState(() {
@@ -490,18 +356,14 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
   }
 
   List<Widget> _buildResponses() {
-<<<<<<< HEAD
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     return widget.review.responses.map((response) {
       return Container(
         margin: const EdgeInsets.only(left: 16, bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-<<<<<<< HEAD
           color: isDark
               ? Colors.grey[800]
               : theme.primaryColor.withOpacity(0.08),
@@ -511,22 +373,13 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                 ? Colors.grey[700]!
                 : theme.primaryColor.withOpacity(0.2),
           ),
-=======
-          color: Colors.blue[50],
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.blue[100]!),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-<<<<<<< HEAD
                 Icon(Icons.person, size: 16, color: theme.primaryColor),
-=======
-                Icon(Icons.store, size: 16, color: Colors.blue[700]),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 const SizedBox(width: 8),
                 Expanded(
                   child: Column(
@@ -539,7 +392,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
-<<<<<<< HEAD
                               color: isDark ? Colors.white : theme.primaryColor,
                             ),
                           ),
@@ -565,42 +417,14 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                                 ),
                               ),
                             ),
-=======
-                              color: Colors.blue[900],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.blue[700],
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              'owner'.tr(),
-                              style: const TextStyle(
-                                fontSize: 9,
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                         ],
                       ),
                       Text(
                         DateFormat.yMMMd().format(response.createdAt),
                         style: TextStyle(
-<<<<<<< HEAD
                           color: isDark
                               ? Colors.grey[400]
                               : theme.primaryColor.withOpacity(0.7),
-=======
-                          color: Colors.blue[700],
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                           fontSize: 11,
                         ),
                       ),
@@ -609,15 +433,11 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                 ),
                 if (widget.isOwner && widget.onDeleteResponse != null)
                   IconButton(
-<<<<<<< HEAD
                     icon: Icon(
                       Icons.delete_outline,
                       size: 18,
                       color: Colors.red[400],
                     ),
-=======
-                    icon: Icon(Icons.delete_outline, size: 18, color: Colors.red[400]),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                     onPressed: () => _confirmDeleteResponse(response),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -629,11 +449,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               response.responseText,
               style: TextStyle(
                 fontSize: 13,
-<<<<<<< HEAD
                 color: isDark ? Colors.white70 : Colors.black87,
-=======
-                color: Colors.blue[900],
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 height: 1.4,
               ),
             ),
@@ -644,7 +460,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
   }
 
   Widget _buildResponseField() {
-<<<<<<< HEAD
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
@@ -654,20 +469,12 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
         color: isDark ? Colors.grey[850] : Colors.grey[100],
         borderRadius: BorderRadius.circular(8),
         border: isDark ? Border.all(color: Colors.grey[700]!) : null,
-=======
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           TextField(
             controller: _responseController,
-<<<<<<< HEAD
             style: TextStyle(color: isDark ? Colors.white : Colors.black87),
             decoration: InputDecoration(
               hintText: 'write_response'.tr(),
@@ -685,15 +492,6 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
               ),
               filled: true,
               fillColor: isDark ? Colors.grey[800] : Colors.white,
-=======
-            decoration: InputDecoration(
-              hintText: 'write_response'.tr(),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-              filled: true,
-              fillColor: Colors.white,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               contentPadding: const EdgeInsets.all(12),
             ),
             maxLines: 3,
@@ -735,15 +533,9 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
 
   Future<void> _submitResponse() async {
     if (_responseController.text.trim().isEmpty) {
-<<<<<<< HEAD
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('response_empty'.tr())));
-=======
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('response_empty'.tr())),
-      );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       return;
     }
 
@@ -761,28 +553,16 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
           _isSubmitting = false;
         });
 
-<<<<<<< HEAD
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('response_added'.tr())));
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('response_added'.tr())),
-        );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-<<<<<<< HEAD
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('error_adding_response'.tr())));
-=======
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('error_adding_response'.tr())),
-        );
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       }
     }
   }

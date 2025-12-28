@@ -101,16 +101,12 @@ class AutoServicesApiService {
       if (response.statusCode == 200) {
         final data = jsonDecode(utf8.decode(response.bodyBytes));
         ApiLogger.logSuccess('Loaded service details for ID: $serviceId');
-<<<<<<< HEAD
 
         final serviceJson = data is Map && data.containsKey('data')
             ? data['data'] as Map<String, dynamic>
             : data as Map<String, dynamic>;
 
         return AutoServiceModel.fromJson(serviceJson);
-=======
-        return AutoServiceModel.fromJson(data as Map<String, dynamic>);
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       } else if (response.statusCode == 401) {
         ApiLogger.logError('GET', uri, 'Unauthorized', response: response);
         throw Exception('401');
@@ -496,24 +492,18 @@ class AutoServicesApiService {
   Future<List<ServiceCategory>> getServiceCategories({String? token}) async {
     // Пробуем несколько возможных эндпоинтов
     final possibleEndpoints = [
-<<<<<<< HEAD
       '${ApiConfig.apiUrl}/service-category/',
       '${ApiConfig.apiUrl}/category/',
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
       '${ApiConfig.apiUrl}/categories/',
       '${ApiConfig.apiUrl}/service/categories/',
       '${ApiConfig.apiUrl}/service/category/',
       '${ApiConfig.apiUrl}/service-categories/',
-<<<<<<< HEAD
       '${ApiConfig.apiUrl}/common/categories/',
       '${ApiConfig.apiUrl}/common/category/',
       '${ApiConfig.apiUrl}/service/category-list/',
       '${ApiConfig.apiUrl}/common/service-categories/',
       '${ApiConfig.apiUrl}/common/services/categories/',
       '${ApiConfig.apiUrl}/services/categories/',
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     ];
 
     final headers = <String, String>{'Content-Type': 'application/json'};
@@ -552,21 +542,13 @@ class AutoServicesApiService {
           }
         }
       } catch (e) {
-<<<<<<< HEAD
         // Just log info for probing failures, not error
         ApiLogger.logInfo('Probe failed for $endpoint: $e');
-=======
-        ApiLogger.logInfo('Trying next endpoint after error: $e');
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         continue;
       }
     }
 
-<<<<<<< HEAD
     // Если ни один эндпоинт не сработал
-=======
-    // Если ни один эндпоинт не сработал, возвращаем дефолтные категории
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     ApiLogger.logWarning(
       'No category endpoint worked, using fallback categories',
     );

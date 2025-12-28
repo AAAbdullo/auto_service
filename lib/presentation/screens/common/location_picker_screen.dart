@@ -63,7 +63,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         desiredAccuracy: LocationAccuracy.high,
       );
 
-<<<<<<< HEAD
       if (mounted) {
         setState(() {
           _selectedLocation = Point(
@@ -72,14 +71,6 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
           );
         });
       }
-=======
-      setState(() {
-        _selectedLocation = Point(
-          latitude: position.latitude,
-          longitude: position.longitude,
-        );
-      });
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 
       // Переместить камеру к текущей локации
       await _mapController?.moveCamera(
@@ -98,13 +89,9 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
         );
       }
     } finally {
-<<<<<<< HEAD
       if (mounted) {
         setState(() => _isLoading = false);
       }
-=======
-      setState(() => _isLoading = false);
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     }
   }
 
@@ -164,11 +151,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-<<<<<<< HEAD
                     color: Theme.of(context).cardColor,
-=======
-                    color: Colors.white,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                     borderRadius: BorderRadius.circular(8),
                     boxShadow: [
                       BoxShadow(
@@ -180,16 +163,10 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                   ),
                   child: Text(
                     '${_selectedLocation.latitude.toStringAsFixed(6)}, ${_selectedLocation.longitude.toStringAsFixed(6)}',
-<<<<<<< HEAD
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.bodyMedium?.color,
-=======
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                     ),
                   ),
                 ),
@@ -199,11 +176,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
 
           // Кнопка "Моя локация"
           Positioned(
-<<<<<<< HEAD
             bottom: 170,
-=======
-            bottom: 100,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
             right: 16,
             child: FloatingActionButton(
               heroTag: 'current_location',
@@ -222,11 +195,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-<<<<<<< HEAD
                 color: Theme.of(context).cardColor,
-=======
-                color: Colors.white,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.1),
@@ -243,30 +212,20 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                   children: [
                     Text(
                       'selected_location'.tr(),
-<<<<<<< HEAD
                       style: TextStyle(
                         fontSize: 12,
                         color: Theme.of(context).hintColor,
                       ),
-=======
-                      style: TextStyle(fontSize: 12, color: Colors.grey[600]),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                     ),
                     const SizedBox(height: 4),
                     Text(
                       _selectedAddress.isEmpty
                           ? '${_selectedLocation.latitude.toStringAsFixed(6)}, ${_selectedLocation.longitude.toStringAsFixed(6)}'
                           : _selectedAddress,
-<<<<<<< HEAD
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).textTheme.bodyLarge?.color,
-=======
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                       ),
                     ),
                     const SizedBox(height: 16),
@@ -284,11 +243,7 @@ class _LocationPickerScreenState extends State<LocationPickerScreen> {
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-<<<<<<< HEAD
                           backgroundColor: Theme.of(context).primaryColor,
-=======
-                          backgroundColor: Colors.blue,
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),

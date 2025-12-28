@@ -52,7 +52,6 @@ class AuthProvider with ChangeNotifier {
     return success;
   }
 
-<<<<<<< HEAD
   Future<bool> register(String phone, String password, String fullName) async {
     _isLoading = true;
     notifyListeners();
@@ -62,13 +61,6 @@ class AuthProvider with ChangeNotifier {
       password,
       fullName: fullName,
     );
-=======
-  Future<bool> register(String phone, String password) async {
-    _isLoading = true;
-    notifyListeners();
-
-    final success = await _authRepository.register(phone, password);
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     if (success) {
       // If auto-login logic exists in register, set phone.
       // Current repo register returns bool but doesn't auto-login usually.

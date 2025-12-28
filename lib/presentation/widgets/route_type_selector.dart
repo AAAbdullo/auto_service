@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'dart:ui';
-=======
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
 import 'package:auto_service/core/services/mapkit_routing_service.dart';
 
 /// Кнопки выбора типа маршрута
@@ -18,7 +15,6 @@ class RouteTypeSelector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-<<<<<<< HEAD
     return ClipRRect(
       borderRadius: BorderRadius.circular(20),
       child: BackdropFilter(
@@ -56,28 +52,6 @@ class RouteTypeSelector extends StatelessWidget {
               ),
             ],
           ),
-=======
-    return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _buildTypeButton(
-              type: RouteType.driving,
-              icon: Icons.directions_car,
-              label: 'Авто',
-            ),
-            const SizedBox(height: 8),
-            _buildTypeButton(
-              type: RouteType.walking,
-              icon: Icons.directions_walk,
-              label: 'Пешком',
-            ),
-          ],
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
         ),
       ),
     );
@@ -89,7 +63,6 @@ class RouteTypeSelector extends StatelessWidget {
     required String label,
   }) {
     final isSelected = selectedType == type;
-<<<<<<< HEAD
     final color = _getTypeColor(type);
 
     return AnimatedContainer(
@@ -127,26 +100,12 @@ class RouteTypeSelector extends StatelessWidget {
         child: InkWell(
           onTap: () => onTypeSelected(type),
           borderRadius: BorderRadius.circular(16),
-=======
-
-    return Material(
-      color: isSelected ? _getTypeColor(type) : Colors.grey[200],
-      borderRadius: BorderRadius.circular(8),
-      child: InkWell(
-        onTap: () => onTypeSelected(type),
-        borderRadius: BorderRadius.circular(8),
-        child: Container(
-          width: 60,
-          height: 60,
-          padding: const EdgeInsets.all(8),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(
                 icon,
                 color: isSelected ? Colors.white : Colors.grey[700],
-<<<<<<< HEAD
                 size: 28,
               ),
               const SizedBox(height: 6),
@@ -160,18 +119,6 @@ class RouteTypeSelector extends StatelessWidget {
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-=======
-                size: 24,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                label,
-                style: TextStyle(
-                  fontSize: 10,
-                  color: isSelected ? Colors.white : Colors.grey[700],
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
               ),
             ],
           ),
@@ -183,15 +130,9 @@ class RouteTypeSelector extends StatelessWidget {
   Color _getTypeColor(RouteType type) {
     switch (type) {
       case RouteType.driving:
-<<<<<<< HEAD
         return const Color(0xFF2196F3);
       case RouteType.walking:
         return const Color(0xFF4CAF50);
-=======
-        return Colors.blue;
-      case RouteType.walking:
-        return Colors.green;
->>>>>>> 420a5290a84808305b67d14c3efa00a2302c11d1
     }
   }
 }
