@@ -1,0 +1,24 @@
+# Flutter/Dart specific
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+flutter_*.png
+*.dart_tool
+
+# Android specific
+.gradle
+/captures/
+/gradlew
+/gradlew.bat
+/gradle-wrapper.jar
+/local.properties
+GeneratedPluginRegistrant.java
+.cxx/
+android/gradle.properties
+
+# Keystore files
+key.properties
+**/*.keystore
+**/*.jks

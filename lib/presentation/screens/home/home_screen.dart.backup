@@ -1,0 +1,778 @@
+import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:yandex_mapkit/yandex_mapkit.dart';
+
+import 'package:auto_service/data/models/auto_service_model.dart';
+import 'package:auto_service/data/repositories/auto_services_repository.dart';
+import 'package:auto_service/presentation/widgets/common/loading_overlay.dart';
+import 'package:auto_service/presentation/widgets/custom_search_bar.dart';
+import 'package:auto_service/core/services/mapkit_routing_service.dart';
+import 'package:auto_service/core/services/navigation_service.dart';
+import 'package:auto_service/core/services/tts_service.dart';
+import 'package:auto_service/presentation/widgets/navigation_panel.dart';
+import 'package:auto_service/presentation/widgets/route_type_selector.dart';
+
+class HomeScreen extends StatefulWidget {
+  final double? targetLatitude;
+  final double? targetLongitude;
+  const HomeScreen({super.key, this.targetLatitude, this.targetLongitude});
+
+  @override
+  State<HomeScreen> createState() => HomeScreenState();
+}
+
+class HomeScreenState extends State<HomeScreen> {
+  YandexMapController? _mapController;
+  bool _isLoadingLocation = false;
+  List<AutoServiceModel> _allServices = [];
+  List<AutoServiceModel> _filteredServices = [];
+
+  Point? _currentPosition;
+  final double _selectedRating = 0.0;
+  String? _selectedCategory;
+  String _searchQuery = '';
+  RouteType _selectedRouteType = RouteType.driving; // Тип маршрута
+
+  final List<MapObject> _mapObjects = [];
+
+  BitmapDescriptor? _serviceAssetIcon;
+  BitmapDescriptor? _userLocationIcon;
+
+  // Навигация
+  final NavigationService _navigationService = NavigationService();
+  NavigationState? _navigationState;
+  RouteResult? _currentRoute;
+  Point? _routeDestination;
+  Timer? _cameraFollowTimer;
+  bool _ttsEnabled = true; // TTS включен по умолчанию
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _ensureMarkerAssetsLoaded();
+      if (mounted) {
+        _updateMapObjects();
+      }
+    });
+    _loadNearbyServices();
+    _determinePosition();
+  }
+
+  @override
+  void dispose() {
+    _cameraFollowTimer?.cancel();
+    _navigationService.stopNavigation();
+    super.dispose();
+  }
+
+  // Метод для построения маршрута (вызывается из main.dart)
+  Future<void> buildRouteTo(double latitude, double longitude) async {
+    if (!mounted || _currentPosition == null) return;
+
+    try {
+      // Показываем индикатор загрузки
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('building_route'.tr()),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Строим маршрут выбранного типа
+      final result = await MapKitRoutingService.buildRoute(
+        startPoint: _currentPosition!,
+        routeType: _selectedRouteType,
+        endPoint: Point(latitude: latitude, longitude: longitude),
+      );
+
+      if (result == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('route_error'.tr()),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+        return;
+      }
+
+      // Добавляем линию маршрута на карту
+      if (mounted) {
+        setState(() {
+          _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_line');
+          _mapObjects.add(
+            PolylineMapObject(
+              mapId: const MapObjectId('route_line'),
+              polyline: Polyline(points: result.geometryPoints),
+              strokeColor: _getRouteColor(_selectedRouteType),
+              strokeWidth: 5.0,
+              outlineColor: Colors.white,
+              outlineWidth: 1.0,
+            ),
+          );
+
+          // Сохраняем маршрут и точку назначения для кнопки "Начать навигацию"
+          _currentRoute = result;
+          _routeDestination = Point(latitude: latitude, longitude: longitude);
+        });
+
+        // Показываем информацию о маршруте
+        final routeInfo = _selectedRouteType == RouteType.driving
+            ? '${result.formattedDistance}, ${result.formattedDurationWithTraffic} (с пробками)'
+            : '${result.formattedDistance}, ${result.formattedDuration}';
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${_selectedRouteType.emoji} ${'route'.tr()}: $routeInfo',
+            ),
+            backgroundColor: _getRouteColor(_selectedRouteType),
+            duration: const Duration(seconds: 5),
+          ),
+        );
+
+        // Приближаем камеру к маршруту
+        if (_mapController != null && result.geometryPoints.isNotEmpty) {
+          final points = result.geometryPoints;
+          double minLat = points.first.latitude;
+          double maxLat = points.first.latitude;
+          double minLon = points.first.longitude;
+          double maxLon = points.first.longitude;
+
+          for (final point in points) {
+            if (point.latitude < minLat) minLat = point.latitude;
+            if (point.latitude > maxLat) maxLat = point.latitude;
+            if (point.longitude < minLon) minLon = point.longitude;
+            if (point.longitude > maxLon) maxLon = point.longitude;
+          }
+
+          await _mapController!.moveCamera(
+            CameraUpdate.newGeometry(
+              Geometry.fromBoundingBox(
+                BoundingBox(
+                  southWest: Point(latitude: minLat, longitude: minLon),
+                  northEast: Point(latitude: maxLat, longitude: maxLon),
+                ),
+              ),
+            ),
+            animation: const MapAnimation(
+              type: MapAnimationType.smooth,
+              duration: 1.0,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Ошибка построения маршрута: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('route_error'.tr()),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Получить цвет маршрута в зависимости от типа
+  Color _getRouteColor(RouteType type) {
+    switch (type) {
+      case RouteType.driving:
+        return Colors.blue;
+      case RouteType.walking:
+        return Colors.green;
+    }
+  }
+
+  /// Начать навигацию
+  Future<void> _startNavigation() async {
+    if (_currentRoute == null || _routeDestination == null) return;
+
+    await _navigationService.startNavigation(
+      route: _currentRoute!,
+      destination: _routeDestination!,
+      onUpdate: (state) {
+        if (mounted) {
+          setState(() {
+            _navigationState = state;
+          });
+
+          // Обновить камеру в режиме следования
+          _updateCameraFollowing();
+        }
+      },
+    );
+
+    // Запустить таймер для плавного следования камеры
+    _cameraFollowTimer = Timer.periodic(
+      const Duration(milliseconds: 500),
+      (_) => _updateCameraFollowing(),
+    );
+  }
+
+  /// Остановить навигацию
+  Future<void> _stopNavigation() async {
+    await _navigationService.stopNavigation();
+    _cameraFollowTimer?.cancel();
+    _cameraFollowTimer = null;
+
+    if (mounted) {
+      setState(() {
+        _navigationState = null;
+        _currentRoute = null;
+        _routeDestination = null;
+
+        // Удалить линию маршрута
+        _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_line');
+      });
+    }
+  }
+
+  /// Обновить камеру в режиме следования
+  void _updateCameraFollowing() {
+    if (_mapController == null || !_navigationService.isNavigating) return;
+
+    final cameraPos = _navigationService.getFollowingCameraPosition();
+    if (cameraPos != null) {
+      _mapController!.moveCamera(
+        CameraUpdate.newCameraPosition(cameraPos),
+        animation: const MapAnimation(
+          type: MapAnimationType.smooth,
+          duration: 0.3,
+        ),
+      );
+    }
+  }
+
+  Future<void> _ensureMarkerAssetsLoaded() async {
+    try {
+      if (_serviceAssetIcon == null) {
+        final ByteData data = await rootBundle.load(
+          'assets/icons/auto_service.png',
+        );
+        _serviceAssetIcon = BitmapDescriptor.fromBytes(
+          data.buffer.asUint8List(),
+        );
+      }
+
+      // Загружаем иконку для местоположения пользователя
+      if (_userLocationIcon == null) {
+        final ByteData data = await rootBundle.load(
+          'assets/icons/geo_position.png',
+        );
+        _userLocationIcon = BitmapDescriptor.fromBytes(
+          data.buffer.asUint8List(),
+        );
+      }
+    } catch (e) {
+      debugPrint('⚠️ Ошибка загрузки иконок: $e');
+    }
+  }
+
+  Future<void> _loadNearbyServices() async {
+    try {
+      final repo = AutoServicesRepository();
+      final services = await repo.getAllServices();
+
+      if (mounted) {
+        setState(() {
+          _allServices = services;
+          _filteredServices = services;
+        });
+        _updateMapObjects();
+      }
+    } catch (e) {
+      debugPrint('Ошибка загрузки сервисов: $e');
+    }
+  }
+
+  Future<void> _determinePosition() async {
+    if (_isLoadingLocation) return;
+
+    setState(() => _isLoadingLocation = true);
+
+    try {
+      final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = const Point(
+              latitude: 41.2995,
+              longitude: 69.2401,
+            );
+            _isLoadingLocation = false;
+          });
+        }
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          if (mounted) {
+            setState(() {
+              _currentPosition = const Point(
+                latitude: 41.2995,
+                longitude: 69.2401,
+              );
+              _isLoadingLocation = false;
+            });
+          }
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        if (mounted) {
+          setState(() {
+            _currentPosition = const Point(
+              latitude: 41.2995,
+              longitude: 69.2401,
+            );
+            _isLoadingLocation = false;
+          });
+        }
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 10),
+      );
+
+      if (mounted) {
+        setState(() {
+          _currentPosition = Point(
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+          _isLoadingLocation = false;
+        });
+        _updateMapObjects();
+        _moveToCurrentLocation();
+      }
+    } catch (e) {
+      debugPrint('Ошибка определения местоположения: $e');
+      if (mounted) {
+        setState(() {
+          _currentPosition = const Point(latitude: 41.2995, longitude: 69.2401);
+          _isLoadingLocation = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _moveToCurrentLocation() async {
+    if (_mapController != null && _currentPosition != null) {
+      await _mapController!.moveCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: _currentPosition!, zoom: 14),
+        ),
+        animation: const MapAnimation(
+          type: MapAnimationType.smooth,
+          duration: 1.0,
+        ),
+      );
+    }
+  }
+
+  void _updateMapObjects() async {
+    _mapObjects.clear();
+
+    // Метка пользователя теперь управляется через UserLocationLayer
+    // Не добавляем вручную PlacemarkMapObject для местоположения
+
+    // Добавляем маркеры сервисов
+    if (_filteredServices.isNotEmpty) {
+      try {
+        // Загружаем иконку auto_service.png
+        final ByteData imageData = await rootBundle.load(
+          'assets/icons/auto_service.png',
+        );
+        final Uint8List imageBytes = imageData.buffer.asUint8List();
+        final serviceIcon = BitmapDescriptor.fromBytes(imageBytes);
+
+        for (int i = 0; i < _filteredServices.length; i++) {
+          final service = _filteredServices[i];
+          _mapObjects.add(
+            PlacemarkMapObject(
+              mapId: MapObjectId('service_$i'),
+              point: Point(
+                latitude: service.latitude,
+                longitude: service.longitude,
+              ),
+              icon: PlacemarkIcon.single(
+                PlacemarkIconStyle(image: serviceIcon, scale: 0.15),
+              ),
+              opacity: 1.0,
+              onTap: (PlacemarkMapObject self, Point point) {
+                _onServiceTap(service);
+              },
+            ),
+          );
+        }
+      } catch (e) {
+        debugPrint('Ошибка загрузки иконки auto_service.png: $e');
+        // Fallback на стандартную иконку
+        for (int i = 0; i < _filteredServices.length; i++) {
+          final service = _filteredServices[i];
+          _mapObjects.add(
+            PlacemarkMapObject(
+              mapId: MapObjectId('service_$i'),
+              point: Point(
+                latitude: service.latitude,
+                longitude: service.longitude,
+              ),
+              opacity: 1.0,
+              onTap: (PlacemarkMapObject self, Point point) {
+                _onServiceTap(service);
+              },
+            ),
+          );
+        }
+      }
+    }
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void _onServiceTap(AutoServiceModel service) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.car_repair, color: Colors.blue, size: 32),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    service.name,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(service.description),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Icon(Icons.star, color: Colors.amber, size: 20),
+                const SizedBox(width: 4),
+                Text(
+                  service.rating.toStringAsFixed(1),
+                  style: const TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                buildRouteTo(service.latitude, service.longitude);
+              },
+              icon: const Icon(Icons.directions),
+              label: Text('route'.tr()),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 48),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _filteredServices = _allServices.where((service) {
+        final matchesRating =
+            _selectedRating == 0.0 || service.rating >= _selectedRating;
+        final matchesCategory =
+            _selectedCategory == null ||
+            service.category?.slug == _selectedCategory;
+        final matchesSearch =
+            _searchQuery.isEmpty ||
+            service.name.toLowerCase().contains(_searchQuery.toLowerCase()) ||
+            service.description.toLowerCase().contains(
+              _searchQuery.toLowerCase(),
+            );
+
+        return matchesRating && matchesCategory && matchesSearch;
+      }).toList();
+    });
+    _updateMapObjects();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        children: [
+          YandexMap(
+            mapObjects: _mapObjects,
+            onMapCreated: (controller) async {
+              _mapController = controller;
+
+              // Инициализируем слой местоположения пользователя
+              _userLocationLayer = MapKitFactory.instance
+                  .createUserLocationLayer(controller.mapWindow);
+
+              // Включаем слой и делаем его видимым
+              _userLocationLayer?.setVisible(true);
+              _userLocationLayer?.setHeadingEnabled(
+                true,
+              ); // Показывать направление
+              _userLocationLayer?.setAutoZoomEnabled(
+                false,
+              ); // Отключаем автозум
+
+              // Настраиваем внешний вид метки
+              _userLocationLayer?.setObjectListener(
+                UserLocationObjectListener(
+                  onObjectAdded: (view) {
+                    // Настройка иконки метки
+                    view.arrow.setIcon(
+                      ImageProvider.fromImageProvider(
+                        const AssetImage('assets/icons/geo_position.png'),
+                      ),
+                      IconStyle(scale: 0.5, rotationType: RotationType.Rotate),
+                    );
+
+                    // Настройка круга точности
+                    view.accuracyCircle.fillColor = Colors.blue.withOpacity(
+                      0.2,
+                    );
+                    view.accuracyCircle.strokeColor = Colors.blue.withOpacity(
+                      0.5,
+                    );
+                    view.accuracyCircle.strokeWidth = 1.0;
+                  },
+                  onObjectRemoved: (view) {},
+                  onObjectUpdated: (view, event) {
+                    // Обновляем текущую позицию при изменении местоположения
+                    if (event.location.position != null) {
+                      setState(() {
+                        _currentPosition = Point(
+                          latitude: event.location.position!.latitude,
+                          longitude: event.location.position!.longitude,
+                        );
+                      });
+                    }
+                  },
+                ),
+              );
+
+              if (_currentPosition != null) {
+                await _moveToCurrentLocation();
+              }
+            },
+          ),
+
+          // Поисковая панель
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 16,
+            left: 16,
+            right: 16,
+            child: CustomSearchBar(
+              hintText: 'search'.tr(),
+              onChanged: (query) {
+                setState(() => _searchQuery = query);
+                _applyFilters();
+              },
+              onFilterTap: () {
+                // Показать фильтры
+              },
+            ),
+          ),
+
+          // Кнопка "Моя локация" (скрывается во время навигации)
+          if (_navigationState == null)
+            Positioned(
+              bottom: _currentRoute != null ? 180 : 120,
+              right: 16,
+              child: FloatingActionButton(
+                heroTag: 'location',
+                onPressed: _moveToCurrentLocation,
+                child: const Icon(Icons.my_location),
+              ),
+            ),
+
+          // Селектор типа маршрута (показывается только после построения маршрута)
+          if (_currentRoute != null && _navigationState == null)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 80,
+              right: 16,
+              child: RouteTypeSelector(
+                selectedType: _selectedRouteType,
+                onTypeSelected: (type) {
+                  setState(() {
+                    _selectedRouteType = type;
+                  });
+
+                  // Перестроить маршрут с новым типом
+                  if (_routeDestination != null) {
+                    buildRouteTo(
+                      _routeDestination!.latitude,
+                      _routeDestination!.longitude,
+                    );
+                  }
+                },
+              ),
+            ),
+
+          // Кнопка "Начать навигацию" (показывается после построения маршрута)
+          if (_currentRoute != null && _navigationState == null)
+            Positioned(
+              bottom: 100,
+              left: 16,
+              right: 16,
+              child: Row(
+                children: [
+                  // Кнопка начать навигацию
+                  Expanded(
+                    child: Container(
+                      height: 60,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            _getRouteColor(_selectedRouteType),
+                            _getRouteColor(_selectedRouteType).withOpacity(0.8),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: _startNavigation,
+                          borderRadius: BorderRadius.circular(16),
+                          child: Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(
+                                  Icons.navigation,
+                                  color: Colors.white,
+                                  size: 28,
+                                ),
+                                const SizedBox(width: 12),
+                                const Text(
+                                  'Начать навигацию',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  // Кнопка отмены маршрута
+                  Container(
+                    width: 60,
+                    height: 60,
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          setState(() {
+                            _currentRoute = null;
+                            _routeDestination = null;
+                            _mapObjects.removeWhere(
+                              (obj) => obj.mapId.value == 'route_line',
+                            );
+                          });
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Маршрут отменен'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // Панель навигации (показывается при активной навигации)
+          if (_navigationState != null)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: NavigationPanel(
+                navigationState: _navigationState!,
+                onStop: _stopNavigation,
+                ttsEnabled: _ttsEnabled,
+                onTTSToggle: () {
+                  setState(() {
+                    _ttsEnabled = !_ttsEnabled;
+                  });
+                  if (!_ttsEnabled) {
+                    TTSService().stop();
+                  }
+                },
+              ),
+            ),
+
+          if (_isLoadingLocation)
+            LoadingOverlay(
+              isLoading: _isLoadingLocation,
+              message: 'Определение местоположения...',
+              child: const SizedBox.shrink(),
+            ),
+        ],
+      ),
+    );
+  }
+}
