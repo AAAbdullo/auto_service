@@ -65,9 +65,7 @@ class BookingProvider with ChangeNotifier {
     required int reservationId,
     required String status, // pending | confirmed | cancelled
   }) async {
-    debugPrint(
-      '🌐 [Booking/API] updateStatus id=$reservationId -> $status',
-    );
+    debugPrint('🌐 [Booking/API] updateStatus id=$reservationId -> $status');
     final result = await _apiService.updateReservationStatus(
       token: token,
       reservationId: reservationId,
@@ -95,9 +93,7 @@ class BookingProvider with ChangeNotifier {
         _bookingDetails
           ..clear()
           ..addAll(
-            jsonList
-                .map((json) => BookingDetailsModel.fromJson(json))
-                .toList(),
+            jsonList.map((json) => BookingDetailsModel.fromJson(json)).toList(),
           );
         debugPrint(
           '✅ [Booking] loaded ${_bookingDetails.length} items from local storage',
@@ -175,10 +171,11 @@ class BookingProvider with ChangeNotifier {
 
   /// Получить бронирования для конкретного сотрудника
   List<BookingDetailsModel> getBookingsForEmployee(String employeePhone) {
-    final list = _bookingDetails
-        .where((booking) => booking.employeePhone == employeePhone)
-        .toList()
-      ..sort((a, b) => b.bookedAt.compareTo(a.bookedAt));
+    final list =
+        _bookingDetails
+            .where((booking) => booking.employeePhone == employeePhone)
+            .toList()
+          ..sort((a, b) => b.bookedAt.compareTo(a.bookedAt));
     debugPrint(
       '📊 [Booking] getBookingsForEmployee "$employeePhone" => ${list.length} items',
     );
@@ -192,9 +189,7 @@ class BookingProvider with ChangeNotifier {
           (booking) => booking.employeePhone == employeePhone && booking.isNew,
         )
         .length;
-    debugPrint(
-      '🔔 [Booking] getNewBookingsCount "$employeePhone" => $count',
-    );
+    debugPrint('🔔 [Booking] getNewBookingsCount "$employeePhone" => $count');
     return count;
   }
 
@@ -238,7 +233,7 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  void removeBooking(String id) {
+  void removeBooking(int? id) {
     _bookedItems.removeWhere((item) => item.id == id);
     debugPrint('🗑 [Booking] remove simple booking id=$id');
     notifyListeners();

@@ -30,9 +30,9 @@ class ReviewItemWidget extends StatefulWidget {
 }
 
 class _ReviewItemWidgetState extends State<ReviewItemWidget> {
-  final bool _showResponseField = false;
+  bool _showResponseField = false;
   final TextEditingController _responseController = TextEditingController();
-  final bool _isSubmitting = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -431,7 +431,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                     ],
                   ),
                 ),
-                if (widget.isOwner && widget.onDeleteResponse != null) {
+                if (widget.isOwner && widget.onDeleteResponse != null)
                   IconButton(
                     icon: Icon(
                       Icons.delete_outline,
@@ -441,8 +441,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
                     onPressed: () => _confirmDeleteResponse(response),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
-                  )
-                },
+                  ),
               ],
             ),
             const SizedBox(height: 8),
@@ -456,7 +455,7 @@ class _ReviewItemWidgetState extends State<ReviewItemWidget> {
             ),
           ],
         ),
-      )
+      );
     }).toList();
   }
 
