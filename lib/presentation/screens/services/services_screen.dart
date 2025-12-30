@@ -1,6 +1,6 @@
 import 'package:auto_service/data/models/auto_service_model.dart';
 import 'package:auto_service/data/repositories/auto_services_repository.dart';
-import 'package:auto_service/presentation/widgets/custom_search_bar.dart';
+import 'package:auto_service/presentation/widgets/unified_search_bar.dart';
 import 'package:auto_service/presentation/screens/services/service_detail_screen.dart';
 import 'package:auto_service/presentation/screens/services/add_service_screen.dart';
 import 'package:auto_service/main.dart';
@@ -27,6 +27,11 @@ class ServicesScreenState extends State<ServicesScreen> {
   String _searchQuery = '';
 
   final List<double> _ratingFilters = [4.5, 4.0, 3.5, 3.0];
+
+  // Nearest services mode
+  bool _isNearestMode = false;
+  Position? _currentPosition;
+  final double _currentRadius = 5000; // 5 km by default
 
   // Категории
   List<String> get _categories => [
@@ -334,11 +339,91 @@ class ServicesScreenState extends State<ServicesScreen> {
     });
   }
 
-  void _onSearchChanged(String query) {
+  /// Load nearest services
+  Future<void> _loadNearestServices() async {
+    // Check location permission
+    final permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
+      final requested = await Geolocator.requestPermission();
+      if (requested == LocationPermission.denied ||
+          requested == LocationPermission.deniedForever) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('location_permission_required'.tr())),
+          );
+        }
+        return;
+      }
+    }
+
+    // Get current position
+    try {
+      final position = await Geolocator.getCurrentPosition();
+      setState(() {
+        _currentPosition = position;
+      });
+    } catch (e) {
+      debugPrint('❌ Error getting position: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('failed_to_get_location'.tr())));
+      }
+      return;
+    }
+
+    // Load nearest services
+    setState(() => _isLoading = true);
+    try {
+      final services = await AutoServicesRepository().getNearestServices(
+        lat: _currentPosition!.latitude,
+        lon: _currentPosition!.longitude,
+        radius: _currentRadius,
+      );
+
+      setState(() {
+        _isNearestMode = true;
+        _services = services;
+        _allServices = services;
+        _isLoading = false;
+      });
+
+      debugPrint('✅ Loaded ${services.length} nearest services');
+    } catch (e) {
+      debugPrint('❌ Error loading nearest services: $e');
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('failed_to_load_nearest_services'.tr()),
+            action: SnackBarAction(
+              label: 'retry'.tr(),
+              onPressed: _loadNearestServices,
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Switch to all services
+  Future<void> _switchToAllServices() async {
     setState(() {
-      _searchQuery = query;
-      _applyFilters();
+      _isNearestMode = false;
+      _currentPosition = null;
     });
+    await _loadServices();
+  }
+
+  /// Format distance
+  String _formatDistance(double? distanceInMeters) {
+    if (distanceInMeters == null) return '';
+    if (distanceInMeters < 1000) {
+      return '${distanceInMeters.toStringAsFixed(0)} м';
+    } else {
+      return '${(distanceInMeters / 1000).toStringAsFixed(1)} км';
+    }
   }
 
   @override
@@ -350,46 +435,33 @@ class ServicesScreenState extends State<ServicesScreen> {
         _minRating != null ||
         _selectedCategories.isNotEmpty ||
         _searchQuery.isNotEmpty;
-    final borderColor = isDark ? Colors.grey[700]! : Colors.grey[300]!;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
+            // Unified Search Bar
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark ? Colors.grey[900] : Colors.grey[100],
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: borderColor, width: 1),
-                      ),
-                      child: CustomSearchBar(
-                        hintText: 'search_hint'.tr(),
-                        onChanged: _onSearchChanged,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Container(
-                    decoration: BoxDecoration(
-                      color: isDark ? Colors.grey[900] : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: borderColor, width: 1),
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.filter_list,
-                        color: theme.colorScheme.primary,
-                      ),
-                      onPressed: _openFilters,
-                    ),
-                  ),
-                ],
+              child: UnifiedSearchBar(
+                searchQuery: _searchQuery,
+                onSearchChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
+                  _applyFilters();
+                },
+                onNearestTap: () {
+                  if (_isNearestMode) {
+                    _switchToAllServices();
+                  } else {
+                    _loadNearestServices();
+                  }
+                },
+                onFilterTap: _openFilters,
+                isNearestMode: _isNearestMode,
+                hasActiveFilters: filtersApplied,
               ),
             ),
             if (filtersApplied)
@@ -628,6 +700,60 @@ class ServicesScreenState extends State<ServicesScreen> {
                                                           : Colors.grey[500],
                                                     ),
                                                   ),
+
+                                                // Distance badge (only in nearest mode)
+                                                if (_isNearestMode &&
+                                                    s.distance != null) ...[
+                                                  const SizedBox(width: 8),
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 6,
+                                                          vertical: 2,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: theme
+                                                          .colorScheme
+                                                          .primary
+                                                          .withValues(
+                                                            alpha: 0.15,
+                                                          ),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          Icons.location_on,
+                                                          size: 12,
+                                                          color: theme
+                                                              .colorScheme
+                                                              .primary,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 2,
+                                                        ),
+                                                        Text(
+                                                          _formatDistance(
+                                                            s.distance,
+                                                          ),
+                                                          style: TextStyle(
+                                                            fontSize: 11,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                            color: theme
+                                                                .colorScheme
+                                                                .primary,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
                                               ],
                                             ),
                                           ],

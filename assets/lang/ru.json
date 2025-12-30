@@ -439,5 +439,7 @@
   "payment_methods_footer": "Мы принимаем все основные виды оплаты. Безопасность гарантирована.",
   "building_route": "Построение маршрута...",
   "extra_services": "Дополнительные услуги",
-  "no_categories": "Категории не найдены"
+  "no_categories": "Категории не найдены",
+  "location_permission_required": "Требуется разрешение на геолокацию",
+  "failed_to_load_nearest_services": "Не удалось загрузить ближайшие сервисы"
 }

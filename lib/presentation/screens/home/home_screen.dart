@@ -10,12 +10,11 @@ import 'package:yandex_mapkit/yandex_mapkit.dart';
 import 'package:auto_service/data/models/auto_service_model.dart';
 import 'package:auto_service/data/repositories/auto_services_repository.dart';
 import 'package:auto_service/presentation/widgets/common/loading_overlay.dart';
-import 'package:auto_service/presentation/widgets/custom_search_bar.dart';
 import 'package:auto_service/core/services/mapkit_routing_service.dart';
 import 'package:auto_service/core/services/yandex_router_api_service.dart';
 import 'package:auto_service/core/services/navigation_service.dart';
-import 'package:auto_service/core/services/tts_service.dart';
 import 'package:auto_service/presentation/widgets/navigation_panel.dart';
+import 'package:auto_service/presentation/widgets/unified_search_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   final double? targetLatitude;
@@ -63,6 +62,10 @@ class HomeScreenState extends State<HomeScreen> {
   Point? _routeDestination;
   Timer? _cameraFollowTimer;
   bool _ttsEnabled = true; // TTS включен по умолчанию
+
+  // Nearest services on map
+  bool _isNearestModeOnMap = false;
+  final double _mapNearestRadius = 5000; // 5 км по умолчанию
 
   // Умное поведение камеры (как в Яндекс.Картах)
   Timer? _cameraReturnTimer;
@@ -323,14 +326,41 @@ class HomeScreenState extends State<HomeScreen> {
     await _navigationService.startNavigation(
       route: _currentRoute!,
       destination: _routeDestination!,
+      ttsEnabled: _ttsEnabled, // Передаем состояние TTS
       onUpdate: (state) {
         if (mounted) {
           setState(() {
             _navigationState = state;
+
+            // Обновить линию маршрута с оставшимися точками (прогрессивная очистка)
+            if (state.remainingRoutePoints.isNotEmpty) {
+              _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_line');
+              _mapObjects.add(
+                PolylineMapObject(
+                  mapId: const MapObjectId('route_line'),
+                  polyline: Polyline(points: state.remainingRoutePoints),
+                  strokeColor: _getRouteColor(_selectedRouteType),
+                  strokeWidth: 5.0,
+                  outlineColor: Colors.white,
+                  outlineWidth: 1.0,
+                ),
+              );
+            }
           });
 
           // Обновить камеру в режиме следования
           _updateCameraFollowing();
+        }
+      },
+      onArrival: () {
+        // Очистить маршрут с карты при автоматическом завершении навигации
+        if (mounted) {
+          setState(() {
+            _mapObjects.removeWhere((obj) => obj.mapId.value == 'route_line');
+            _currentRoute = null;
+            _routeDestination = null;
+          });
+          debugPrint('🎯 Прибыли к цели! Маршрут очищен с карты.');
         }
       },
     );
@@ -987,6 +1017,97 @@ class HomeScreenState extends State<HomeScreen> {
     _updateMapObjects();
   }
 
+  /// Загрузить ближайшие сервисы на карте
+  Future<void> _loadNearestServicesOnMap() async {
+    if (_currentPosition == null) {
+      // Запросить разрешение на геолокацию
+      final permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        final requested = await Geolocator.requestPermission();
+        if (requested == LocationPermission.denied ||
+            requested == LocationPermission.deniedForever) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('location_permission_required'.tr())),
+            );
+          }
+          return;
+        }
+      }
+
+      // Получить текущую позицию
+      try {
+        final position = await Geolocator.getCurrentPosition();
+        setState(() {
+          _currentPosition = Point(
+            latitude: position.latitude,
+            longitude: position.longitude,
+          );
+        });
+      } catch (e) {
+        debugPrint('❌ Ошибка получения позиции: $e');
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('failed_to_get_location'.tr())),
+          );
+        }
+        return;
+      }
+    }
+
+    // Загрузить ближайшие сервисы
+    try {
+      final services = await AutoServicesRepository().getNearestServices(
+        lat: _currentPosition!.latitude,
+        lon: _currentPosition!.longitude,
+        radius: _mapNearestRadius,
+      );
+
+      setState(() {
+        _isNearestModeOnMap = true;
+        _allServices = services;
+        _filteredServices = services;
+      });
+
+      _updateMapObjects();
+      debugPrint('✅ Загружено ${services.length} ближайших сервисов на карте');
+    } catch (e) {
+      debugPrint('❌ Ошибка загрузки ближайших сервисов: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('failed_to_load_nearest_services'.tr())),
+        );
+      }
+    }
+  }
+
+  /// Переключиться на все сервисы
+  Future<void> _switchToAllServicesOnMap() async {
+    setState(() {
+      _isNearestModeOnMap = false;
+    });
+    // Перезагрузить все сервисы
+    try {
+      final services = await AutoServicesRepository().getAllServices();
+      setState(() {
+        _allServices = services;
+      });
+      _applyFilters();
+    } catch (e) {
+      debugPrint('❌ Ошибка загрузки сервисов: $e');
+    }
+  }
+
+  /// Обработчик кнопки "Ближайшие" на карте
+  void _handleNearestTapOnMap() {
+    if (_isNearestModeOnMap) {
+      _switchToAllServicesOnMap();
+    } else {
+      _loadNearestServicesOnMap();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1026,20 +1147,23 @@ class HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // Поисковая панель
+          // Search Bar
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 16,
             right: 16,
-            child: CustomSearchBar(
-              hintText: 'search'.tr(),
-              onChanged: (query) {
+            child: UnifiedSearchBar(
+              searchQuery: _searchQuery,
+              onSearchChanged: (query) {
                 setState(() => _searchQuery = query);
                 _applyFilters();
               },
-              onFilterTap: () {
-                _showFilterDialog();
-              },
+              onNearestTap: _handleNearestTapOnMap,
+              onFilterTap: _showFilterDialog,
+              isNearestMode: _isNearestModeOnMap,
+              hasActiveFilters:
+                  _selectedRating > 0 || _selectedCategories.isNotEmpty,
+              hintText: 'search'.tr(),
             ),
           ),
 
@@ -1405,9 +1529,8 @@ class HomeScreenState extends State<HomeScreen> {
                   setState(() {
                     _ttsEnabled = !_ttsEnabled;
                   });
-                  if (!_ttsEnabled) {
-                    TTSService().stop();
-                  }
+                  // Обновить состояние TTS в NavigationService
+                  _navigationService.setTTSEnabled(_ttsEnabled);
                 },
               ),
             ),

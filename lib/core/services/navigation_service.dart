@@ -27,6 +27,7 @@ class NavigationService {
   double _remainingDistance = 0.0; // метры
   int _remainingTime = 0; // минуты
   double _totalDistance = 0.0; // метры
+  List<Point> _remainingRoutePoints = []; // Оставшиеся точки маршрута
 
   // Для голосовых подсказок
   final TTSService _tts = TTSService();
@@ -34,12 +35,19 @@ class NavigationService {
 
   // Callback для обновления UI
   Function(NavigationState)? onNavigationUpdate;
+  // Callback для очистки маршрута при прибытии
+  Function()? onArrivalClearRoute;
+
+  // TTS enabled state
+  bool _ttsEnabled = true;
 
   /// Начать навигацию
   Future<void> startNavigation({
     required RouteResult route,
     required Point destination,
     required Function(NavigationState) onUpdate,
+    Function()? onArrival,
+    bool ttsEnabled = true,
   }) async {
     if (_isNavigating) {
       await stopNavigation();
@@ -52,14 +60,18 @@ class NavigationService {
     _remainingDistance = _totalDistance;
     _remainingTime = route.durationWithTrafficMinutes;
     onNavigationUpdate = onUpdate;
+    onArrivalClearRoute = onArrival;
+    _ttsEnabled = ttsEnabled;
 
-    // Инициализация TTS
-    await _tts.initialize();
-    await _tts.announceNavigationStart(
-      'пункт назначения',
-      route.distanceKm,
-      route.durationWithTrafficMinutes,
-    );
+    // Инициализация TTS только если включено
+    if (_ttsEnabled) {
+      await _tts.initialize();
+      await _tts.announceNavigationStart(
+        'пункт назначения',
+        route.distanceKm,
+        route.durationWithTrafficMinutes,
+      );
+    }
 
     // Начать отслеживание позиции
     _startPositionTracking();
@@ -69,7 +81,7 @@ class NavigationService {
   }
 
   /// Остановить навигацию
-  Future<void> stopNavigation() async {
+  Future<void> stopNavigation({bool arrivedAtDestination = false}) async {
     if (!_isNavigating) return;
 
     _isNavigating = false;
@@ -79,7 +91,15 @@ class NavigationService {
     await _positionStream?.cancel();
     _positionStream = null;
 
-    await _tts.announceNavigationCancelled();
+    // Объявление отмены только если TTS включен
+    if (!arrivedAtDestination && _ttsEnabled) {
+      await _tts.announceNavigationCancelled();
+    }
+
+    // Если прибыли к цели, вызываем callback для очистки маршрута
+    if (arrivedAtDestination && onArrivalClearRoute != null) {
+      onArrivalClearRoute!();
+    }
 
     debugPrint('🛑 Навигация остановлена');
     _notifyUpdate();
@@ -89,7 +109,7 @@ class NavigationService {
   void _startPositionTracking() {
     const locationSettings = LocationSettings(
       accuracy: LocationAccuracy.high,
-      distanceFilter: 5, // Обновлять каждые 5 метров
+      distanceFilter: 1, // Обновлять каждый метр для моментального стирания
     );
 
     _positionStream =
@@ -104,7 +124,7 @@ class NavigationService {
   }
 
   /// Обработка обновления позиции
-  void _onPositionUpdate(Position position) {
+  Future<void> _onPositionUpdate(Position position) async {
     if (!_isNavigating || _destination == null) return;
 
     _previousPosition = _currentPosition;
@@ -160,8 +180,11 @@ class NavigationService {
       _remainingDistance = straightLineDistance;
     }
 
+    // Обновить оставшиеся точки маршрута (обрезать пройденную часть)
+    _updateRemainingRoutePoints(position);
+
     // Проверить приближение к цели (используем расстояние по прямой)
-    _checkApproaching(straightLineDistance);
+    await _checkApproaching(straightLineDistance);
 
     // Обновить UI
     _notifyUpdate();
@@ -170,6 +193,49 @@ class NavigationService {
       '📍 Позиция обновлена: скорость ${_currentSpeed.toStringAsFixed(1)} км/ч, '
       'осталось ${(_remainingDistance / 1000).toStringAsFixed(1)} км '
       '(по прямой: ${(straightLineDistance / 1000).toStringAsFixed(1)} км)',
+    );
+  }
+
+  /// Обновить оставшиеся точки маршрута (обрезать пройденную часть)
+  void _updateRemainingRoutePoints(Position currentPosition) {
+    if (_activeRoute == null || _activeRoute!.geometryPoints.isEmpty) {
+      _remainingRoutePoints = [];
+      return;
+    }
+
+    final allPoints = _activeRoute!.geometryPoints;
+    final userPoint = Point(
+      latitude: currentPosition.latitude,
+      longitude: currentPosition.longitude,
+    );
+
+    // Найти ближайшую точку маршрута к текущей позиции пользователя
+    int closestPointIndex = 0;
+    double minDistance = double.infinity;
+
+    for (int i = 0; i < allPoints.length; i++) {
+      final distance = Geolocator.distanceBetween(
+        currentPosition.latitude,
+        currentPosition.longitude,
+        allPoints[i].latitude,
+        allPoints[i].longitude,
+      );
+
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestPointIndex = i;
+      }
+    }
+
+    // Оставляем только точки от ближайшей до конца маршрута
+    // Добавляем текущую позицию пользователя как первую точку
+    _remainingRoutePoints = [
+      userPoint,
+      ...allPoints.sublist(closestPointIndex),
+    ];
+
+    debugPrint(
+      '🗺️ Обновлены точки маршрута: ${_remainingRoutePoints.length} из ${allPoints.length} (обрезано $closestPointIndex точек)',
     );
   }
 
@@ -190,26 +256,31 @@ class NavigationService {
   }
 
   /// Проверить приближение к цели и озвучить
-  void _checkApproaching(double straightLineDistance) {
-    // Озвучиваем на определенных расстояниях (используем расстояние по прямой)
-    if (straightLineDistance < 50 && _lastAnnouncedDistance >= 50) {
-      _tts.announceApproaching(straightLineDistance);
-      _lastAnnouncedDistance = straightLineDistance;
-    } else if (straightLineDistance < 100 && _lastAnnouncedDistance >= 100) {
-      _tts.announceApproaching(straightLineDistance);
-      _lastAnnouncedDistance = straightLineDistance;
-    } else if (straightLineDistance < 200 && _lastAnnouncedDistance >= 200) {
-      _tts.announceApproaching(straightLineDistance);
-      _lastAnnouncedDistance = straightLineDistance;
-    } else if (straightLineDistance < 500 && _lastAnnouncedDistance >= 500) {
-      _tts.announceApproaching(straightLineDistance);
-      _lastAnnouncedDistance = straightLineDistance;
+  Future<void> _checkApproaching(double straightLineDistance) async {
+    // Озвучиваем на определенных расстояниях только если TTS включен
+    if (_ttsEnabled) {
+      if (straightLineDistance < 50 && _lastAnnouncedDistance >= 50) {
+        _tts.announceApproaching(straightLineDistance);
+        _lastAnnouncedDistance = straightLineDistance;
+      } else if (straightLineDistance < 100 && _lastAnnouncedDistance >= 100) {
+        _tts.announceApproaching(straightLineDistance);
+        _lastAnnouncedDistance = straightLineDistance;
+      } else if (straightLineDistance < 200 && _lastAnnouncedDistance >= 200) {
+        _tts.announceApproaching(straightLineDistance);
+        _lastAnnouncedDistance = straightLineDistance;
+      } else if (straightLineDistance < 500 && _lastAnnouncedDistance >= 500) {
+        _tts.announceApproaching(straightLineDistance);
+        _lastAnnouncedDistance = straightLineDistance;
+      }
     }
 
     // Прибыли к цели (используем расстояние по прямой)
     if (straightLineDistance < 30) {
-      _tts.announceNavigationComplete();
-      stopNavigation();
+      if (_ttsEnabled) {
+        _tts.announceNavigationComplete();
+      }
+      // Передаем флаг, что навигация завершена автоматически (прибыли к цели)
+      await stopNavigation(arrivedAtDestination: true);
     }
   }
 
@@ -230,6 +301,7 @@ class NavigationService {
       currentPosition: _currentPosition,
       destination: _destination,
       route: _activeRoute,
+      remainingRoutePoints: _remainingRoutePoints,
     );
   }
 
@@ -287,6 +359,15 @@ class NavigationService {
   double get remainingDistance => _remainingDistance;
   int get remainingTime => _remainingTime;
   Position? get currentPosition => _currentPosition;
+
+  /// Обновить состояние TTS во время навигации
+  void setTTSEnabled(bool enabled) {
+    _ttsEnabled = enabled;
+    if (!enabled) {
+      _tts.stop(); // Остановить текущее воспроизведение
+    }
+    debugPrint('🔊 TTS ${enabled ? "включен" : "выключен"}');
+  }
 }
 
 /// Состояние навигации
@@ -298,6 +379,7 @@ class NavigationState {
   final Position? currentPosition;
   final Point? destination;
   final RouteResult? route;
+  final List<Point> remainingRoutePoints; // Оставшиеся точки маршрута
 
   NavigationState({
     required this.isNavigating,
@@ -307,6 +389,7 @@ class NavigationState {
     this.currentPosition,
     this.destination,
     this.route,
+    this.remainingRoutePoints = const [],
   });
 
   String get formattedSpeed => '${currentSpeed.toStringAsFixed(0)} км/ч';
