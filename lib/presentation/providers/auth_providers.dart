@@ -21,8 +21,33 @@ class AuthProvider with ChangeNotifier {
   Future<void> init() async {
     _currentUserPhone = await _authRepository.getCurrentUser();
     if (_currentUserPhone != null) {
+      // 🔄 Proactively refresh access token on app startup
+      // This prevents 401 errors when access token expires after 24 hours
+      try {
+        final refreshToken = await _authRepository.getRefreshToken();
+        if (refreshToken != null) {
+          debugPrint('🔑 Proactively refreshing access token on startup...');
+          final newAccessToken = await _authRepository.refreshAccessToken();
+
+          if (newAccessToken == null) {
+            // Refresh token expired - logout gracefully
+            debugPrint('⚠️ Refresh token expired, logging out...');
+            await logout();
+            return;
+          }
+          debugPrint('✅ Access token refreshed successfully');
+        }
+      } catch (e) {
+        debugPrint('❌ Error refreshing token on startup: $e');
+        // If refresh fails, try to continue - getUserProfile will handle 401
+      }
+
       // Fetch full profile locally or from API if token exists
       await refreshProfile();
+
+      // If profile fetch failed (user was logged out), don't proceed
+      if (_currentUserPhone == null) return;
+
       // Keep legacy check for compatibility if needed, or rely on profile
       _isServiceEmployee = await _authRepository.isServiceEmployee(
         _currentUserPhone!,
@@ -52,7 +77,12 @@ class AuthProvider with ChangeNotifier {
     return success;
   }
 
-  Future<bool> register(String phone, String password, String fullName) async {
+  Future<bool> register(
+    String phone,
+    String password,
+    String fullName,
+    String email,
+  ) async {
     _isLoading = true;
     notifyListeners();
 
@@ -60,6 +90,7 @@ class AuthProvider with ChangeNotifier {
       phone,
       password,
       fullName: fullName,
+      email: email,
     );
     if (success) {
       // If auto-login logic exists in register, set phone.

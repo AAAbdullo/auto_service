@@ -5,6 +5,8 @@ import 'dart:convert';
 import 'package:flutter/services.dart'
     show rootBundle; // 👈 для загрузки JSON из assets
 
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+
 class LocalStorage {
   static const String _keyLoggedPhone = 'loggedPhone';
   static const String _keyUserData = 'userData';
@@ -13,6 +15,8 @@ class LocalStorage {
   static const String _keyOrders = 'orders';
   static const String _keyReservedParts = 'reserved_parts';
   static const String _keyServiceEmployee = 'service_employee_';
+
+  static const _secureStorage = FlutterSecureStorage();
 
   // Инициализация
   Future<void> init() async {
@@ -49,40 +53,29 @@ class LocalStorage {
     return null;
   }
 
-  Future<void> savePassword(String phone, String password) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(phone, password);
-  }
-
-  Future<String?> getPassword(String phone) async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(phone);
-  }
+  // WARN: Password storage removed for security.
+  // We should rely on tokens for persistence.
 
   // ====================== Auth Tokens ======================
   static const String _keyAccessToken = 'accessToken';
   static const String _keyRefreshToken = 'refreshToken';
 
   Future<void> saveAuthToken(String access, String refresh) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_keyAccessToken, access);
-    await prefs.setString(_keyRefreshToken, refresh);
+    await _secureStorage.write(key: _keyAccessToken, value: access);
+    await _secureStorage.write(key: _keyRefreshToken, value: refresh);
   }
 
   Future<String?> getAccessToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyAccessToken);
+    return await _secureStorage.read(key: _keyAccessToken);
   }
 
   Future<String?> getRefreshToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_keyRefreshToken);
+    return await _secureStorage.read(key: _keyRefreshToken);
   }
 
   Future<void> clearAuthToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyAccessToken);
-    await prefs.remove(_keyRefreshToken);
+    await _secureStorage.delete(key: _keyAccessToken);
+    await _secureStorage.delete(key: _keyRefreshToken);
   }
 
   // ====================== Favorites ======================

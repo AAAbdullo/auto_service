@@ -1,4 +1,4 @@
-package com.example.auto_service
+package uz.airi.automakon
 
 import android.app.Application
 import com.yandex.mapkit.MapKitFactory

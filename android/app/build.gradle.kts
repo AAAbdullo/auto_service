@@ -4,16 +4,19 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+import java.util.Properties
+import java.io.FileInputStream
+
 android {
-    namespace = "com.example.auto_service"  // ваш namespace
+    namespace = "uz.airi.automakon"
     compileSdk = 36
     
     defaultConfig {
-        applicationId = "com.example.auto_service"
+        applicationId = "uz.airi.automakon"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 12
+        versionName = "1.0.12"
 
          val properties = org.jetbrains.kotlin.konan.properties.Properties()
          val localPropertiesFile = rootProject.file("local.properties")
@@ -25,11 +28,20 @@ android {
         manifestPlaceholders["YANDEX_MAPKIT_API_KEY"] = yandexMapkitApiKey
     }
     
+    signingConfigs {
+        create("release") {
+            keyAlias = "upload"
+            keyPassword = "AutoMakon2024!"
+            storeFile = file("/Users/marcus/upload-keystore.jks")
+            storePassword = "AutoMakon2024!"
+        }
+    }
+    
     buildTypes {
         release {
-            signingConfig = signingConfigs.getByName("debug")
-            isMinifyEnabled = false
-            isShrinkResources = false
+            signingConfig = signingConfigs.getByName("release")
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
         debug {

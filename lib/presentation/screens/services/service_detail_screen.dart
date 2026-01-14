@@ -431,10 +431,12 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
   }
 
   Widget _buildReviewsSection(AuthProvider authProvider) {
+    // Allow both service owners and superusers to respond to reviews
     final isOwner =
         authProvider.isAuthenticated &&
         authProvider.userProfile?.id != null &&
-        _service.ownerId == authProvider.userProfile!.id;
+        (_service.ownerId == authProvider.userProfile!.id ||
+            authProvider.userProfile!.isSuperuser == true);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -477,7 +479,8 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
               isOwner: isOwner,
               onEdit: () => _showEditReviewDialog(review),
               onDelete: () => _deleteReview(review.id),
-              onAddResponse: authProvider.isAuthenticated
+              // Only service owner can respond to reviews (backend restriction)
+              onAddResponse: isOwner
                   ? (responseText) =>
                         _addReviewResponse(review.id, responseText)
                   : null,
@@ -527,6 +530,9 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         if (response != null) {
           // Обновляем список отзывов чтобы показать новый ответ
           _fetchReviews();
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('response_added'.tr())));
         } else {
           ScaffoldMessenger.of(
             context,
@@ -534,10 +540,14 @@ class _ServiceDetailScreenState extends State<ServiceDetailScreen> {
         }
       }
     } catch (e) {
+      print('❌ Error adding review response: $e');
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('error: $e')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('error_adding_response'.tr()),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

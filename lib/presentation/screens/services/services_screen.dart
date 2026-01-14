@@ -68,24 +68,25 @@ class ServicesScreenState extends State<ServicesScreen> {
 
       try {
         LocationPermission permission = await Geolocator.checkPermission();
-        if (permission == LocationPermission.denied) {
-          permission = await Geolocator.requestPermission();
-        }
+        // REMOVED: permission request. We only use location if already granted by Home/Main screen.
+        // if (permission == LocationPermission.denied) {
+        //   permission = await Geolocator.requestPermission();
+        // }
 
         if (permission == LocationPermission.always ||
             permission == LocationPermission.whileInUse) {
           // Пробуем быстро получить кэш
           Position? position = await Geolocator.getLastKnownPosition();
-          // Если нет кэша, пробуем GPS но недолго
+          // Если нет кэша, пробуем GPS (увеличил таймаут до 10с)
           position ??= await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.low,
-            timeLimit: const Duration(seconds: 4),
+            timeLimit: const Duration(seconds: 10),
           );
 
           debugPrint(
             '📍 Got location: ${position.latitude}, ${position.longitude}',
           );
-          // Если локация есть, пробуем получить "ближайшие" с API (если сервер умеет сортировать)
+          // Если локация есть, пробуем получить "ближайшие" с API
           try {
             final nearest = await AutoServicesRepository().getNearestServices(
               lat: position.latitude,
@@ -103,7 +104,7 @@ class ServicesScreenState extends State<ServicesScreen> {
           }
         }
       } catch (e) {
-        debugPrint('⚠️ Location check failed: $e');
+        debugPrint('⚠️ Location check failed (passive): $e');
       }
 
       if (!mounted) return;

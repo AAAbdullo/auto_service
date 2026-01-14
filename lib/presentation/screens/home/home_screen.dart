@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:yandex_mapkit/yandex_mapkit.dart';
@@ -15,6 +16,7 @@ import 'package:auto_service/core/services/yandex_router_api_service.dart';
 import 'package:auto_service/core/services/navigation_service.dart';
 import 'package:auto_service/presentation/widgets/navigation_panel.dart';
 import 'package:auto_service/presentation/widgets/unified_search_bar.dart';
+import 'package:auto_service/main.dart'; // For mainScreenKey
 
 class HomeScreen extends StatefulWidget {
   final double? targetLatitude;
@@ -437,16 +439,11 @@ class HomeScreenState extends State<HomeScreen> {
 
   Future<void> _ensureMarkerAssetsLoaded() async {
     try {
-      if (_serviceAssetIcon == null) {
-        final ByteData data = await rootBundle.load(
-          'assets/icons/auto_service.png',
-        );
-        _serviceAssetIcon = BitmapDescriptor.fromBytes(
-          data.buffer.asUint8List(),
-        );
-      }
+      _serviceAssetIcon ??= BitmapDescriptor.fromAssetImage(
+        'assets/icons/auto_service.png',
+      );
     } catch (e) {
-      debugPrint('⚠️ Ошибка загрузки иконок: $e');
+      debugPrint('⚠️ Ошибка загрузки иконки (asset): $e');
     }
   }
 
@@ -497,10 +494,8 @@ class HomeScreenState extends State<HomeScreen> {
     setState(() => _isLoadingLocation = true);
 
     try {
-      // 1. Проверяем сервис, но НЕ выходим, если выключено.
-      // Приложение попытается запросить права, и если пользователь включит GPS позже,
-      // сработает StreamSubscription (см. initState).
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      debugPrint('📍 Location service enabled: $serviceEnabled');
       if (!serviceEnabled) {
         debugPrint(
           '⚠️ Location service is disabled, but continuing to check permissions...',
@@ -508,12 +503,13 @@ class HomeScreenState extends State<HomeScreen> {
       }
 
       LocationPermission permission = await Geolocator.checkPermission();
+      debugPrint('📍 Current permission: $permission');
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           if (mounted) {
             setState(() {
-              _currentPosition = const Point(
+              _currentPosition ??= const Point(
                 latitude: 41.2995,
                 longitude: 69.2401,
               );
@@ -527,7 +523,7 @@ class HomeScreenState extends State<HomeScreen> {
       if (permission == LocationPermission.deniedForever) {
         if (mounted) {
           setState(() {
-            _currentPosition = const Point(
+            _currentPosition ??= const Point(
               latitude: 41.2995,
               longitude: 69.2401,
             );
@@ -537,32 +533,52 @@ class HomeScreenState extends State<HomeScreen> {
         return;
       }
 
-      // Включаем слой местоположения после получения разрешения
-      if (_mapController != null) {
-        try {
-          await _mapController!.toggleUserLayer(visible: true);
-        } catch (e) {
-          debugPrint('Ошибка включения слоя местоположения: $e');
+      // 1. Сразу пробуем получить последнее известное местоположение (это быстро)
+      Position? lastKnownPosition;
+      try {
+        lastKnownPosition = await Geolocator.getLastKnownPosition();
+        if (lastKnownPosition != null && mounted) {
+          debugPrint('📍 Найдено последнее известное местоположение');
+          setState(() {
+            _currentPosition = Point(
+              latitude: lastKnownPosition!.latitude,
+              longitude: lastKnownPosition.longitude,
+            );
+          });
+          _updateMapObjects();
+          _moveToCurrentLocation();
+
+          // Включаем слой пользователя, так как позиция (и права) есть
+          if (_mapController != null) {
+            try {
+              await _mapController!.toggleUserLayer(visible: true);
+            } catch (_) {}
+          }
         }
+      } catch (e) {
+        debugPrint('⚠️ Ошибка получения LastKnownPosition: $e');
       }
 
+      // 2. Пробуем получить живое местоположение
+      // Используем FusedLocationProvider (поддерживает Wi-Fi позиционирование)
       Position? position;
       try {
-        // Пробуем получить точное местоположение
+        debugPrint('🚀 Requesting location (Wi-Fi/GPS, 20s timeout)...');
+
         position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
-          timeLimit: const Duration(seconds: 10),
+          timeLimit: const Duration(seconds: 20),
+        );
+        debugPrint(
+          '✅ Location found: ${position.latitude}, ${position.longitude}',
         );
       } catch (e) {
-        debugPrint(
-          '⚠️ Ошибка получения точной позиции, пробуем последнюю известную: $e',
-        );
-        // Fallback: пробуем получить последнее известное местоположение
-        position = await Geolocator.getLastKnownPosition();
+        debugPrint('❌ Location failed: $e');
       }
 
       if (mounted) {
         if (position != null) {
+          debugPrint('📍 Получено точное GPS местоположение');
           setState(() {
             _currentPosition = Point(
               latitude: position!.latitude,
@@ -573,33 +589,43 @@ class HomeScreenState extends State<HomeScreen> {
           _updateMapObjects();
           _moveToCurrentLocation();
 
-          // Гарантированно включаем слой ПОСЛЕ получения позиции,
-          // так как на некоторых версиях SDK он может не включиться сразу
+          // Гарантированно включаем слой ПОСЛЕ получения точной позиции
           if (_mapController != null) {
             try {
               await _mapController!.toggleUserLayer(visible: true);
             } catch (_) {}
           }
+        } else if (lastKnownPosition != null) {
+          // Если точное не удалось, но было последнее известное - ок, просто выключаем лоадер
+          setState(() => _isLoadingLocation = false);
         } else {
           debugPrint(
             '❌ Не удалось определить местоположение (ни точное, ни последнее)',
           );
-          setState(() {
-            _currentPosition = const Point(
-              latitude: 41.2995,
-              longitude: 69.2401,
-            );
-            _isLoadingLocation = false;
-          });
+          // Fallback только если вообще ничего нет
+          if (_currentPosition == null) {
+            setState(() {
+              _currentPosition = const Point(
+                latitude: 41.2995,
+                longitude: 69.2401,
+              );
+            });
+          }
+          setState(() => _isLoadingLocation = false);
         }
       }
     } catch (e) {
       debugPrint('Ошибка определения местоположения: $e');
       if (mounted) {
-        setState(() {
-          _currentPosition = const Point(latitude: 41.2995, longitude: 69.2401);
-          _isLoadingLocation = false;
-        });
+        if (_currentPosition == null) {
+          setState(() {
+            _currentPosition = const Point(
+              latitude: 41.2995,
+              longitude: 69.2401,
+            );
+          });
+        }
+        setState(() => _isLoadingLocation = false);
       }
     }
   }
@@ -619,73 +645,53 @@ class HomeScreenState extends State<HomeScreen> {
   }
 
   void _updateMapObjects() async {
-    _mapObjects.clear();
-
-    // Метка пользователя теперь управляется через UserLocationLayer
-    // Не добавляем вручную PlacemarkMapObject для местоположения
-
-    // Добавляем маркеры сервисов
-    if (_filteredServices.isNotEmpty) {
-      debugPrint('\n🗺️ ========== ДОБАВЛЕНИЕ МАРКЕРОВ НА КАРТУ ==========');
-      debugPrint('📊 Всего сервисов: ${_allServices.length}');
-      debugPrint('📊 После фильтрации: ${_filteredServices.length}');
-
-      try {
-        // Загружаем иконку auto_service.png
-        final ByteData imageData = await rootBundle.load(
-          'assets/icons/auto_service.png',
-        );
-        final Uint8List imageBytes = imageData.buffer.asUint8List();
-        final serviceIcon = BitmapDescriptor.fromBytes(imageBytes);
-
-        for (int i = 0; i < _filteredServices.length; i++) {
-          final service = _filteredServices[i];
-          debugPrint(
-            '   ✅ Добавлен маркер: ${service.name} (${service.latitude}, ${service.longitude})',
-          );
-          _mapObjects.add(
-            PlacemarkMapObject(
-              mapId: MapObjectId('service_$i'),
-              point: Point(
-                latitude: service.latitude,
-                longitude: service.longitude,
-              ),
-              icon: PlacemarkIcon.single(
-                PlacemarkIconStyle(image: serviceIcon, scale: 0.15),
-              ),
-              opacity: 1.0,
-              onTap: (PlacemarkMapObject self, Point point) {
-                _onServiceTap(service);
-              },
-            ),
-          );
-        }
-        debugPrint('🗺️ ============================================\n');
-      } catch (e) {
-        debugPrint('Ошибка загрузки иконки auto_service.png: $e');
-        // Fallback на стандартную иконку
-        for (int i = 0; i < _filteredServices.length; i++) {
-          final service = _filteredServices[i];
-          _mapObjects.add(
-            PlacemarkMapObject(
-              mapId: MapObjectId('service_$i'),
-              point: Point(
-                latitude: service.latitude,
-                longitude: service.longitude,
-              ),
-              opacity: 1.0,
-              onTap: (PlacemarkMapObject self, Point point) {
-                _onServiceTap(service);
-              },
-            ),
-          );
-        }
-      }
-    } else {
-      debugPrint('\n⚠️ НЕТ СЕРВИСОВ ДЛЯ ОТОБРАЖЕНИЯ НА КАРТЕ!\n');
+    // 1. Ensure icons are loaded
+    if (_serviceAssetIcon == null) {
+      await _ensureMarkerAssetsLoaded();
     }
+
+    // 2. Prepare new list
+    final List<MapObject> newMapObjects = [];
+
+    // Add route line if exists (preserve it)
+    final routeLine = _mapObjects.where(
+      (obj) => obj.mapId.value == 'route_line',
+    );
+    newMapObjects.addAll(routeLine);
+
+    // 3. Add service markers
+    if (_filteredServices.isNotEmpty && _serviceAssetIcon != null) {
+      debugPrint(
+        '🗺️ Updating map markers: ${_filteredServices.length} services',
+      );
+
+      for (int i = 0; i < _filteredServices.length; i++) {
+        final service = _filteredServices[i];
+        newMapObjects.add(
+          PlacemarkMapObject(
+            mapId: MapObjectId('service_${service.id}'), // Use stable ID
+            point: Point(
+              latitude: service.latitude,
+              longitude: service.longitude,
+            ),
+            icon: PlacemarkIcon.single(
+              PlacemarkIconStyle(image: _serviceAssetIcon!, scale: 0.15),
+            ),
+            opacity: 1.0,
+            onTap: (PlacemarkMapObject self, Point point) {
+              _onServiceTap(service);
+            },
+          ),
+        );
+      }
+    }
+
+    // 4. Update state only if changed
     if (mounted) {
-      setState(() {});
+      setState(() {
+        _mapObjects.clear();
+        _mapObjects.addAll(newMapObjects);
+      });
     }
   }
 
@@ -1108,6 +1114,141 @@ class HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  /// Build custom bottom bar combining search and navigation
+  Widget _buildCustomBottomBar(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Container(
+      decoration: BoxDecoration(
+        color: isDark ? Colors.grey[900] : Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, -2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Search Bar Section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+              child: UnifiedSearchBar(
+                searchQuery: _searchQuery,
+                onSearchChanged: (query) {
+                  setState(() => _searchQuery = query);
+                  _applyFilters();
+                },
+                onNearestTap: _handleNearestTapOnMap,
+                onFilterTap: _showFilterDialog,
+                isNearestMode: _isNearestModeOnMap,
+                hasActiveFilters:
+                    _selectedRating > 0 || _selectedCategories.isNotEmpty,
+                hintText: 'search'.tr(),
+              ),
+            ),
+
+            // Navigation Bar Section
+            SizedBox(
+              height: 56,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  _buildNavItem(
+                    context,
+                    icon: Icons.home_outlined,
+                    activeIcon: Icons.home,
+                    label: 'nav_home'.tr(),
+                    index: 0,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.design_services_outlined,
+                    activeIcon: Icons.design_services,
+                    label: 'nav_services'.tr(),
+                    index: 1,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.store_outlined,
+                    activeIcon: Icons.store,
+                    label: 'nav_shop'.tr(),
+                    index: 2,
+                  ),
+                  _buildNavItem(
+                    context,
+                    icon: Icons.person_outline,
+                    activeIcon: Icons.person,
+                    label: 'nav_profile'.tr(),
+                    index: 3,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Build individual navigation item
+  Widget _buildNavItem(
+    BuildContext context, {
+    required IconData icon,
+    required IconData activeIcon,
+    required String label,
+    required int index,
+  }) {
+    final theme = Theme.of(context);
+    final isSelected = index == 0; // Always selected on home screen
+    final isDark = theme.brightness == Brightness.dark;
+
+    return Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () {
+            if (index != 0) {
+              // Navigate to other screens via main screen
+              final mainState = mainScreenKey.currentState;
+              if (mainState != null) {
+                mainState.onItemTapped(index);
+              }
+            }
+          },
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                isSelected ? activeIcon : icon,
+                color: isSelected
+                    ? theme.colorScheme.primary
+                    : (isDark ? Colors.white70 : Colors.black54),
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : (isDark ? Colors.white70 : Colors.black54),
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -1147,30 +1288,11 @@ class HomeScreenState extends State<HomeScreen> {
             },
           ),
 
-          // Search Bar
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 16,
-            left: 16,
-            right: 16,
-            child: UnifiedSearchBar(
-              searchQuery: _searchQuery,
-              onSearchChanged: (query) {
-                setState(() => _searchQuery = query);
-                _applyFilters();
-              },
-              onNearestTap: _handleNearestTapOnMap,
-              onFilterTap: _showFilterDialog,
-              isNearestMode: _isNearestModeOnMap,
-              hasActiveFilters:
-                  _selectedRating > 0 || _selectedCategories.isNotEmpty,
-              hintText: 'search'.tr(),
-            ),
-          ),
-
           // Кнопка "Моя локация" (когда нет маршрута)
+          // Positioned above unified bottom bar (search + nav)
           if (_currentRoute == null && _navigationState == null)
             Positioned(
-              bottom: 24,
+              bottom: 24, // Just above unified bottom bar with small spacing
               right: 16,
               child: Container(
                 width: 56,
@@ -1206,9 +1328,10 @@ class HomeScreenState extends State<HomeScreen> {
             ),
 
           // Объединенная панель управления в стиле Яндекс.Карт (когда есть маршрут)
+          // Positioned above unified bottom bar (search + nav)
           if (_currentRoute != null && _navigationState == null)
             Positioned(
-              bottom: 24,
+              bottom: 24, // Just above unified bottom bar with small spacing
               left: 16,
               right: 16,
               child: Container(
@@ -1543,6 +1666,7 @@ class HomeScreenState extends State<HomeScreen> {
             ),
         ],
       ),
+      bottomNavigationBar: _buildCustomBottomBar(context),
     );
   }
 }

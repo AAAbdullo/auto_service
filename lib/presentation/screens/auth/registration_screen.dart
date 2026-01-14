@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:auto_service/main.dart';
 
 class RegistrationScreen extends StatefulWidget {
   const RegistrationScreen({super.key});
@@ -17,6 +16,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
   final _phoneController = TextEditingController();
   final _fullNameController = TextEditingController();
+  final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   bool _isPasswordVisible = false;
@@ -27,6 +27,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
   void dispose() {
     _phoneController.dispose();
     _fullNameController.dispose();
+    _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -48,38 +49,33 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final phone = '+998${_phoneController.text.trim()}';
+    final phone = '998${_phoneController.text.trim()}';
     final fullName = _fullNameController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text;
 
-    final success = await authProvider.register(phone, password, fullName);
+    final success = await authProvider.register(
+      phone,
+      password,
+      fullName,
+      email,
+    );
 
     if (success) {
-      // Auto-login after registration
-      final loginSuccess = await authProvider.login(phone, password);
-
       setState(() => _isLoading = false);
-
       if (!mounted) return;
 
-      if (loginSuccess) {
-        // Navigate to MainScreen (Profile tab) and remove back stack
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => const MainScreen(initialIndex: 3),
-          ),
-          (route) => false,
-        );
-      } else {
-        // Fallback if login fails but registration succeeded
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('register_success'.tr()),
-            backgroundColor: Colors.green,
-          ),
-        );
-        Navigator.pop(context);
-      }
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Регистрация успешна! Войдите с вашими данными'),
+          backgroundColor: Colors.green,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+
+      // Go back to login screen
+      Navigator.pop(context);
     } else {
       setState(() => _isLoading = false);
       if (!mounted) return;
@@ -173,7 +169,32 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                 ),
                 const SizedBox(height: 16),
 
-                // Телефон с фиксированным +998 через Row
+                // Email
+                TextFormField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  validator: Validators.validateEmail,
+                  style: TextStyle(color: theme.textTheme.bodyLarge?.color),
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    prefixIcon: Icon(
+                      Icons.email,
+                      color: theme.iconTheme.color ?? Colors.grey,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    filled: true,
+                    fillColor:
+                        theme.inputDecorationTheme.fillColor ??
+                        (theme.brightness == Brightness.dark
+                            ? Colors.grey[800]
+                            : Colors.grey[50]),
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // Телефон с фиксированным 998 через Row
                 Row(
                   children: [
                     Container(
@@ -188,7 +209,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '+998',
+                        '998',
                         style: TextStyle(
                           fontSize: 16,
                           color: theme.textTheme.bodyLarge?.color,
