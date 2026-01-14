@@ -45,13 +45,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   // Yandex Map
   final List<MapObject> _mapObjects = [];
 
-  List<ServiceCategory> _categories = [];
-  int? _selectedCategoryId;
-
   @override
   void initState() {
     super.initState();
-    _fetchCategories();
     _loadFullServiceDetails(); // Fetch full details to get extra_services
   }
 
@@ -102,59 +98,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     for (var s in service.services) {
       if (!_services.contains(s)) {
         _services.add(s);
-      }
-    }
-  }
-
-  Future<void> _fetchCategories() async {
-    try {
-      final categories = await AutoServicesRepository().getServiceCategories();
-      if (mounted) {
-        setState(() {
-          // If API returns empty, use fallback categories
-          if (categories.isEmpty) {
-            _categories = [
-              ServiceCategory(id: 1, name: 'Диагностика', slug: 'diagnostics'),
-              ServiceCategory(
-                id: 2,
-                name: 'Ремонт двигателя',
-                slug: 'engine-repair',
-              ),
-              ServiceCategory(id: 3, name: 'Замена масла', slug: 'oil-change'),
-              ServiceCategory(id: 4, name: 'Шиномонтаж', slug: 'tire-service'),
-              ServiceCategory(
-                id: 5,
-                name: 'Ремонт тормозов',
-                slug: 'brake-repair',
-              ),
-            ];
-          } else {
-            _categories = categories;
-          }
-          // Don't auto-select a category - let it be null if not explicitly chosen
-        });
-      }
-    } catch (e) {
-      // On error, use fallback categories
-      if (mounted) {
-        setState(() {
-          _categories = [
-            ServiceCategory(id: 1, name: 'Диагностика', slug: 'diagnostics'),
-            ServiceCategory(
-              id: 2,
-              name: 'Ремонт двигателя',
-              slug: 'engine-repair',
-            ),
-            ServiceCategory(id: 3, name: 'Замена масла', slug: 'oil-change'),
-            ServiceCategory(id: 4, name: 'Шиномонтаж', slug: 'tire-service'),
-            ServiceCategory(
-              id: 5,
-              name: 'Ремонт тормозов',
-              slug: 'brake-repair',
-            ),
-          ];
-          // Don't auto-select a category - let it be null if not explicitly chosen
-        });
       }
     }
   }
@@ -262,8 +205,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       'end_time':
           '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}:00',
       'working_days': _selectedDays.toList(),
-      'category':
-          _selectedCategoryId, // Will be null if no valid category exists
+      'category': null, // Category selection removed from UI
       'extra_services': _services, // Correct key for creation
       'lat': _selectedLat,
       'lon': _selectedLon,
