@@ -177,7 +177,7 @@ class MainScreenState extends State<MainScreen> {
     const ProfileScreen(),
   ];
 
-  void _onItemTapped(int index) {
+  void onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
       if (_selectedIndex == 1) {
@@ -222,40 +222,42 @@ class MainScreenState extends State<MainScreen> {
 
     return Scaffold(
       body: IndexedStack(index: _selectedIndex, children: _screens),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _selectedIndex,
-        onTap: _onItemTapped,
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: theme.brightness == Brightness.dark
-            ? Colors.grey[900]
-            : Colors.white,
-        selectedItemColor: theme.colorScheme.primary,
-        unselectedItemColor: theme.brightness == Brightness.dark
-            ? Colors.white70
-            : Colors.black54,
-        items: [
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.home_outlined),
-            activeIcon: const Icon(Icons.home),
-            label: 'nav_home'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.design_services_outlined),
-            activeIcon: const Icon(Icons.design_services),
-            label: 'nav_services'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.store_outlined),
-            activeIcon: const Icon(Icons.store),
-            label: 'nav_shop'.tr(),
-          ),
-          BottomNavigationBarItem(
-            icon: const Icon(Icons.person_outline),
-            activeIcon: const Icon(Icons.person),
-            label: 'nav_profile'.tr(),
-          ),
-        ],
-      ),
+      bottomNavigationBar: _selectedIndex == 0
+          ? null // Home screen has custom bottom bar in its own widget
+          : BottomNavigationBar(
+              currentIndex: _selectedIndex,
+              onTap: onItemTapped,
+              type: BottomNavigationBarType.fixed,
+              backgroundColor: theme.brightness == Brightness.dark
+                  ? Colors.grey[900]
+                  : Colors.white,
+              selectedItemColor: theme.colorScheme.primary,
+              unselectedItemColor: theme.brightness == Brightness.dark
+                  ? Colors.white70
+                  : Colors.black54,
+              items: [
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.home_outlined),
+                  activeIcon: const Icon(Icons.home),
+                  label: 'nav_home'.tr(),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.design_services_outlined),
+                  activeIcon: const Icon(Icons.design_services),
+                  label: 'nav_services'.tr(),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.store_outlined),
+                  activeIcon: const Icon(Icons.store),
+                  label: 'nav_shop'.tr(),
+                ),
+                BottomNavigationBarItem(
+                  icon: const Icon(Icons.person_outline),
+                  activeIcon: const Icon(Icons.person),
+                  label: 'nav_profile'.tr(),
+                ),
+              ],
+            ),
     );
   }
 }

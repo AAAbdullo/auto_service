@@ -1,20 +1,17 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.auto_service">
+    package="uz.airi.automakon">
 
     <!-- Разрешения для геолокации -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+
 
     <!-- Обязательно для карт -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-    <!-- Разрешения для камеры и галереи -->
+    <!-- Разрешения для камеры (обязательно для съемки фото сервисов) -->
     <uses-permission android:name="android.permission.CAMERA" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     
     <!-- Разрешения для звонков и URL launcher -->
     <uses-permission android:name="android.permission.CALL_PHONE" />
@@ -24,9 +21,9 @@
 
     <application
         android:label="Auto Makon"
-        android:name="com.example.auto_service.MainApplication"
+        android:name="uz.airi.automakon.MainApplication"
         android:icon="@mipmap/ic_launcher"
-        android:usesCleartextTraffic="true">
+        android:usesCleartextTraffic="false">
 
         <activity
             android:name=".MainActivity"

@@ -25,4 +25,16 @@ class Validators {
     }
     return null;
   }
+
+  static String? validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email kiriting';
+    }
+    // Simple email regex
+    final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
+    if (!emailRegex.hasMatch(value)) {
+      return 'Noto\'g\'ri email format';
+    }
+    return null;
+  }
 }

@@ -1,5 +1,6 @@
 import 'package:auto_service/presentation/providers/auth_providers.dart';
 import 'package:auto_service/presentation/screens/auth/registration_screen.dart';
+import 'package:auto_service/presentation/screens/auth/forgot_password_screen.dart';
 import 'package:auto_service/core/utils/responsive_text.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -32,7 +33,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final authProvider = context.read<AuthProvider>();
 
     final success = await authProvider.login(
-      '+998${_phoneController.text.trim()}',
+      '998${_phoneController.text.trim()}',
       _passwordController.text,
     );
 
@@ -121,7 +122,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
-                        '+998',
+                        '998',
                         style: TextStyle(
                           fontSize: 16,
                           color: theme.textTheme.bodyLarge?.color,
@@ -199,6 +200,31 @@ class _LoginScreenState extends State<LoginScreen> {
                     floatingLabelBehavior: FloatingLabelBehavior.auto,
                   ),
                 ),
+                const SizedBox(height: 16),
+
+                // Forgot Password link
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const ForgotPasswordScreen(),
+                        ),
+                      );
+                    },
+                    child: Text(
+                      'Забыли пароль?',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+
                 const SizedBox(height: 24),
 
                 // Кнопка входа

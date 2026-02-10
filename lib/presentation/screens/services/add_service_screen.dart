@@ -45,13 +45,9 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   // Yandex Map
   final List<MapObject> _mapObjects = [];
 
-  List<ServiceCategory> _categories = [];
-  int? _selectedCategoryId;
-
   @override
   void initState() {
     super.initState();
-    _fetchCategories();
     _loadFullServiceDetails(); // Fetch full details to get extra_services
   }
 
@@ -102,66 +98,6 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
     for (var s in service.services) {
       if (!_services.contains(s)) {
         _services.add(s);
-      }
-    }
-  }
-
-  Future<void> _fetchCategories() async {
-    try {
-      final categories = await AutoServicesRepository().getServiceCategories();
-      if (mounted) {
-        setState(() {
-          // If API returns empty, use fallback categories
-          if (categories.isEmpty) {
-            _categories = [
-              ServiceCategory(id: 1, name: 'Диагностика', slug: 'diagnostics'),
-              ServiceCategory(
-                id: 2,
-                name: 'Ремонт двигателя',
-                slug: 'engine-repair',
-              ),
-              ServiceCategory(id: 3, name: 'Замена масла', slug: 'oil-change'),
-              ServiceCategory(id: 4, name: 'Шиномонтаж', slug: 'tire-service'),
-              ServiceCategory(
-                id: 5,
-                name: 'Ремонт тормозов',
-                slug: 'brake-repair',
-              ),
-            ];
-          } else {
-            _categories = categories;
-          }
-          // Set default if adding new service and we have categories
-          if (widget.serviceToEdit == null &&
-              _categories.isNotEmpty &&
-              _selectedCategoryId == null) {
-            _selectedCategoryId = _categories.first.id;
-          }
-        });
-      }
-    } catch (e) {
-      // On error, use fallback categories
-      if (mounted) {
-        setState(() {
-          _categories = [
-            ServiceCategory(id: 1, name: 'Диагностика', slug: 'diagnostics'),
-            ServiceCategory(
-              id: 2,
-              name: 'Ремонт двигателя',
-              slug: 'engine-repair',
-            ),
-            ServiceCategory(id: 3, name: 'Замена масла', slug: 'oil-change'),
-            ServiceCategory(id: 4, name: 'Шиномонтаж', slug: 'tire-service'),
-            ServiceCategory(
-              id: 5,
-              name: 'Ремонт тормозов',
-              slug: 'brake-repair',
-            ),
-          ];
-          if (widget.serviceToEdit == null && _selectedCategoryId == null) {
-            _selectedCategoryId = _categories.first.id;
-          }
-        });
       }
     }
   }
@@ -240,11 +176,8 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       return;
     }
 
-    if (_selectedCategoryId == null) {
-      if (_categories.isNotEmpty) {
-        _selectedCategoryId = _categories.first.id;
-      }
-    }
+    // Don't set a default category ID if none is selected
+    // This prevents sending non-existent category IDs to the backend
 
     final authProvider = context.read<AuthProvider>();
     final token = await authProvider.getAccessToken();
@@ -272,9 +205,8 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
       'end_time':
           '${_endTime.hour.toString().padLeft(2, '0')}:${_endTime.minute.toString().padLeft(2, '0')}:00',
       'working_days': _selectedDays.toList(),
-      'category': _selectedCategoryId,
-      'services':
-          _services, // Backend might use this to populate extra_services
+      'category': null, // Category selection removed from UI
+      'extra_services': _services, // Correct key for creation
       'lat': _selectedLat,
       'lon': _selectedLon,
       'latitude': _selectedLat,
@@ -284,20 +216,16 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
 
     debugPrint('🚀 Sending serviceData: ${jsonEncode(serviceData)}');
 
-    // Payload for extra services (Patch/Update)
-    // NOTE: Sending 'extra_services' as objects causes 500 Internal Server Error
-    // because the backend doesn't support nested writes in .update().
-    // We send only 'services' (strings) and hope the backend processes them.
-    final extraServicesData = {'services': _services};
-
     bool success = false;
     int? serviceId;
 
     try {
       if (widget.serviceToEdit != null) {
-        // UPDATE: Send everything, including extra_services
+        // UPDATE: Use extra_services_list
         final updateData = Map<String, dynamic>.from(serviceData);
-        updateData.addAll(extraServicesData);
+        updateData.remove('extra_services'); // Not valid for update
+        updateData['extra_services_list'] = _services;
+
         debugPrint('🚀 Sending UPDATE serviceData: ${jsonEncode(updateData)}');
 
         serviceId = int.parse(widget.serviceToEdit!.id);
@@ -306,31 +234,14 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
           data: updateData,
         );
       } else {
-        // CREATE: Two steps (some backends ignore extra_services in POST /create)
-        // 1. Create service
+        // CREATE: Single step now supports extra_services
         final createdService = await AutoServicesRepository().createService(
           serviceData: serviceData,
         );
 
         if (createdService != null) {
           serviceId = int.parse(createdService.id);
-          success = true; // Primary creation successful
-
-          // 2. Patch details if we have extra services or images
-          if (_services.isNotEmpty) {
-            final patchData = {
-              'services': _services,
-              // Removed 'extra_services' to avoid 500 error
-            };
-            debugPrint(
-              '🚀 Sending PATCH services (strings): ${jsonEncode(patchData)}',
-            );
-            final patchSuccess = await AutoServicesRepository().updateService(
-              id: serviceId,
-              data: patchData,
-            );
-            debugPrint('Patch extra services successful: $patchSuccess');
-          }
+          success = true;
         }
       }
 

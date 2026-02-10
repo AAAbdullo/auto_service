@@ -490,7 +490,6 @@ class AutoServicesApiService {
 
   /// Get service categories
   Future<List<ServiceCategory>> getServiceCategories({String? token}) async {
-    // Пробуем несколько возможных эндпоинтов
     final possibleEndpoints = [
       '${ApiConfig.apiUrl}/service-category/',
       '${ApiConfig.apiUrl}/category/',

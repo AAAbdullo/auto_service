@@ -60,6 +60,7 @@ class AuthRepository {
     String phone,
     String password, {
     String? fullName,
+    required String email,
     String? telegram,
   }) async {
     final uri = Uri.parse('${ApiConfig.apiUrl}/userx/register/');
@@ -67,6 +68,7 @@ class AuthRepository {
       'phone': phone,
       'password': password,
       'full_name': fullName ?? 'New User',
+      'email': email,
       'telegram': telegram,
     };
     final headers = {'Content-Type': 'application/json'};
@@ -200,6 +202,10 @@ class AuthRepository {
     return await _localStorage.getAccessToken();
   }
 
+  Future<String?> getRefreshToken() async {
+    return await _localStorage.getRefreshToken();
+  }
+
   // --- Profile Management ---
 
   Future<UserProfile?> getUserProfile() async {
@@ -269,5 +275,77 @@ class AuthRepository {
       debugPrint('❌ Error uploading profile image: $e');
       return false;
     }
+  }
+  // Password Recovery Methods
+
+  /// Request password reset OTP via email
+  Future<Map<String, dynamic>?> requestPasswordReset(String email) async {
+    final uri = Uri.parse('${ApiConfig.apiUrl}/userx/forgot-password/');
+    final body = {'email': email};
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http
+          .post(uri, headers: headers, body: jsonEncode(body))
+          .timeout(ApiConfig.connectionTimeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('❌ Error requesting password reset: $e');
+    }
+    return null;
+  }
+
+  /// Verify OTP code
+  Future<Map<String, dynamic>?> verifyOTP(String email, String otp) async {
+    final uri = Uri.parse('${ApiConfig.apiUrl}/userx/verify-otp/');
+    final body = {'email': email, 'otp': otp};
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http
+          .post(uri, headers: headers, body: jsonEncode(body))
+          .timeout(ApiConfig.connectionTimeout);
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+    } catch (e) {
+      debugPrint('❌ Error verifying OTP: $e');
+    }
+    return null;
+  }
+
+  /// Reset password with verified OTP
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final uri = Uri.parse('${ApiConfig.apiUrl}/userx/reset-password/');
+    final body = {
+      'email': email,
+      'otp': otp,
+      'new_password': newPassword,
+      'confirm_password': confirmPassword,
+    };
+    final headers = {'Content-Type': 'application/json'};
+
+    try {
+      final response = await http
+          .post(uri, headers: headers, body: jsonEncode(body))
+          .timeout(ApiConfig.connectionTimeout);
+
+      if (response.statusCode == 200) {
+        debugPrint('✅ Password reset successfully');
+        return true;
+      }
+    } catch (e) {
+      debugPrint('❌ Error resetting password: $e');
+    }
+    return false;
   }
 }
