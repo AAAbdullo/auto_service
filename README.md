@@ -1,156 +1,110 @@
 # 🚗 Auto Service App
 
-> ⚡ **БЫСТРЫЙ СТАРТ:** Смотрите [START_HERE.md](START_HERE.md) для немедленного запуска!
+[![Flutter](https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white)](https://flutter.dev/)
+[![Dart](https://img.shields.io/badge/Dart-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev/)
+[![Yandex MapKit](https://img.shields.io/badge/Yandex_MapKit-FFCC00?style=for-the-badge&logo=yandex&logoColor=black)](https://yandex.ru/dev/mapkit/)
 
-Мобильное приложение для поиска автосервисов, покупки запчастей и навигации.
-
-## 📱 Возможности
-
-- 🗺️ Интерактивная карта с автосервисами и заправками
-- 🛒 Магазин автозапчастей с корзиной
-- 📍 Навигация до выбранного сервиса
-- 📅 Бронирование услуг
-- 👤 Личный кабинет пользователя
-- 🌐 Поддержка русского и узбекского языков
-
-## 🚀 Как запустить?
-
-### ⚡ Самый быстрый способ:
-```bash
-chmod +x menu.sh && ./menu.sh
-```
-
-Выберите "🚀 Запустить приложение" из меню.
-
-### 📖 Подробные инструкции:
-1. **[START_HERE.md](START_HERE.md)** - Начните отсюда! (5 минут)
-2. **[SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)** - Детальная настройка
-3. **[DEBUG_GUIDE.md](DEBUG_GUIDE.md)** - Решение проблем
-
-## 🛠️ Технологии
-
-- **Flutter** - кросс-платформенная разработка
-- **Yandex MapKit** - карты и навигация
-- **Provider** - управление состоянием
-- **SharedPreferences** - локальное хранилище
-- **Easy Localization** - локализация
-
-## 💻 Требования
-
-- macOS 12.0+
-- Xcode 14.0+
-- Flutter 3.0+
-- CocoaPods 1.11.0+
-
-## 🏗️ Структура проекта
-
-```
-lib/
-├── core/              # Базовая функциональность
-│   ├── config/        # Конфигурация (Yandex API)
-│   ├── constants/     # Константы и строки
-│   ├── models/        # Бизнес-модели
-│   ├── services/      # Сервисы (навигация, голос)
-│   └── utils/         # Утилиты
-├── data/              # Слой данных
-│   ├── datasources/   # Источники данных
-│   └── models/        # Модели данных
-└── presentation/      # UI слой
-    ├── providers/     # State management
-    ├── screens/       # Экраны приложения
-    └── widgets/       # Переиспользуемые виджеты
-```
-
-## 🎯 Основные экраны
-
-- **Главная** - Карта с сервисами и заправками
-- **Сервисы** - Список автосервисов
-- **Магазин** - Каталог запчастей
-- **Корзина** - Оформление заказа
-- **Профиль** - Личный кабинет
-- **Бронирования** - История и активные брони
-
-## 🔧 Полезные команды
-
-```bash
-# Запуск приложения
-flutter run
-
-# Очистка проекта
-flutter clean
-
-# Обновление зависимостей
-flutter pub get
-
-# Проверка окружения
-flutter doctor -v
-
-# Сборка для iOS
-flutter build ios
-
-# Просмотр логов
-flutter logs
-```
-
-## 🐛 Решение проблем
-
-### Быстрая диагностика:
-```bash
-flutter doctor -v
-```
-
-### Переустановка зависимостей:
-```bash
-./menu.sh  # Выберите "🧹 Очистить и пересобрать"
-```
-
-### Подробное руководство:
-См. **[DEBUG_GUIDE.md](DEBUG_GUIDE.md)** для детального решения проблем.
-
-## 📱 Поддерживаемые платформы
-
-- ✅ iOS 14.0+ (оптимизировано для M1)
-- ✅ Android 5.0+ (API 21+)
-
-## 🎨 Скриншоты
-
-*Скриншоты будут добавлены позже*
-
-## 📝 Лицензия
-
-Частный проект
-
-## 👨‍💻 Для разработчиков
-
-### Добавление новых функций:
-1. Создайте ветку: `git checkout -b feature/название`
-2. Внесите изменения
-3. Проверьте работу: `flutter test`
-4. Создайте pull request
-
-### Структура кода:
-- **core/** - общая логика, не зависящая от UI
-- **data/** - работа с данными и моделями
-- **presentation/** - UI и управление состоянием
-
-### Запуск тестов:
-```bash
-flutter test
-```
-
-## 🆘 Поддержка
-
-1. **Не запускается?** → [START_HERE.md](START_HERE.md)
-2. **Ошибки при сборке?** → [DEBUG_GUIDE.md](DEBUG_GUIDE.md)
-3. **Вопросы по настройке?** → [SETUP_INSTRUCTIONS.md](SETUP_INSTRUCTIONS.md)
+*Read this in other languages: [English](#english) | [Русский](#russian)*
 
 ---
 
-**🎉 Примечание:** Проект **полностью настроен** для работы на Apple Silicon (M1/M2 Mac). Просто следуйте инструкциям в [START_HERE.md](START_HERE.md)!
+<a id="english"></a>
+## 🇬🇧 English
 
-**✨ Особенности для M1:**
-- ✅ Podfile настроен для arm64
-- ✅ Минимальная версия iOS обновлена до 14.0
-- ✅ Все разрешения добавлены
-- ✅ Yandex MapKit настроен
-- ✅ Готовые скрипты для запуска
+A comprehensive mobile application designed for modern drivers, offering an integrated experience for finding auto services, purchasing spare parts, and seamless navigation. Built with **Flutter** based on **Clean Architecture** principles.
+
+### ✨ Key Features
+
+- **🗺️ Interactive Map & Navigation**: Real-time map powered by Yandex MapKit to locate nearby auto services, gas stations, and navigate directly to them.
+- **🛒 E-commerce for Spare Parts**: Integrated store with a shopping cart to browse and purchase auto parts.
+- **📅 Service Booking System**: Conveniently schedule unkeep and repair services.
+- **👤 User Profiles & History**: Personal accounts to manage active bookings and view service history.
+- **🌐 Localization**: Full support for both English (by default), Russian, and Uzbek languages.
+
+### 🛠️ Tech Stack & Architecture
+
+- **Framework**: Flutter (Cross-platform iOS & Android)
+- **Architecture**: Clean Architecture (Core, Data, Presentation layers)
+- **State Management**: Provider
+- **Maps Location & Routing**: Yandex MapKit
+- **Local Storage**: SharedPreferences & Secure Storage
+- **Localization**: Easy Localization
+- **API Networking**: HTTP with custom interceptors
+
+### 🏗️ Project Structure
+
+```text
+lib/
+├── core/              # Core functionality (config, typography, constants, models)
+├── data/              # Data layer (DataSources, APIs)
+└── presentation/      # UI layer (Screens, Widgets, State Providers)
+```
+
+### 🚀 Getting Started
+
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/AAAbdullo/auto_service.git
+   ```
+2. **Install dependencies:**
+   ```bash
+   flutter pub get
+   ```
+3. **Run the app:**
+   ```bash
+   flutter run
+   ```
+*(Note: Ensure you have your Yandex MapKit API keys configured if running from scratch).*
+
+---
+
+<a id="russian"></a>
+## 🇷🇺 Русский
+
+Комплексное мобильное приложение для современных водителей, объединяющее поиск автосервисов, покупку запчастей и удобную навигацию. Построено на **Flutter** с использованием принципов **Clean Architecture**.
+
+### ✨ Основные возможности
+
+- **🗺️ Интерактивная карта и Навигация**: Карта в реальном времени на базе Yandex MapKit для поиска ближайших СТО, заправок и построения маршрутов.
+- **🛒 Магазин запчастей**: Встроенный каталог с корзиной для удобной покупки автозапчастей.
+- **📅 Система бронирования**: Удобная запись на техническое обслуживание и ремонт.
+- **👤 Личный кабинет**: Управление профилем пользователя, просмотр активных бронирований и истории.
+- **🌐 Локализация**: Полная поддержка русского и узбекского языков.
+
+### 🛠️ Технологии и Архитектура
+
+- **Фреймворк**: Flutter (iOS & Android)
+- **Архитектура**: Clean Architecture (слои: Core, Data, Presentation)
+- **Управление состоянием (State Management)**: Provider
+- **Карты и Навигация**: Yandex MapKit
+- **Локальное хранилище**: SharedPreferences & Secure Storage
+- **Локализация**: Easy Localization
+- **Сеть**: пакет `http` собственной оберткой-интерцептором.
+
+### 🏗️ Структура проекта
+
+```text
+lib/
+├── core/              # Базовый функционал (конфиги, константы, утилиты)
+├── data/              # Слой данных (API, источники данных)
+└── presentation/      # UI-слой (Экраны, Виджеты, Провайдеры состояний)
+```
+
+### 🚀 Быстрый старт
+
+1. **Клонируйте репозиторий:**
+   ```bash
+   git clone https://github.com/AAAbdullo/auto_service.git
+   ```
+2. **Установите зависимости:**
+   ```bash
+   flutter pub get
+   ```
+3. **Запустите приложение:**
+   ```bash
+   flutter run
+   ```
+*(Примечание: Убедитесь, что настроены API ключи Yandex MapKit).*
+
+---
+*Developed by [AAAbdullo](https://github.com/AAAbdullo)*
