@@ -119,10 +119,10 @@ class MapKitDrivingService {
       // Ждем результат с таймаутом
       try {
         final result = await resultFuture.timeout(
-          const Duration(seconds: 30),
+          const Duration(seconds: 10),
           onTimeout: () {
             debugPrint('');
-            debugPrint('⏱️ ТАЙМАУТ: Превышено время ожидания (30 сек)');
+            debugPrint('⏱️ ТАЙМАУТ: Превышено время ожидания (10 сек)');
             debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             session.cancel();
             throw TimeoutException('Route request timeout');

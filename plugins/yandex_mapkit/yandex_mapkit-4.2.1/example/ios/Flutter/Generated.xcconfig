@@ -1,6 +1,6 @@
 // This is a generated file; do not edit or check into version control.
 FLUTTER_ROOT=/Users/marcus/Downloads/flutter
-FLUTTER_APPLICATION_PATH=/Users/marcus/Documents/auto_service_app/plugins/yandex_mapkit/yandex_mapkit-4.2.1/example
+FLUTTER_APPLICATION_PATH=/Users/marcus/auto_service_app/plugins/yandex_mapkit/yandex_mapkit-4.2.1/example
 COCOAPODS_PARALLEL_CODE_SIGN=true
 FLUTTER_TARGET=lib/main.dart
 FLUTTER_BUILD_DIR=build

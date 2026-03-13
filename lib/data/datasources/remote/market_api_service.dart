@@ -129,7 +129,7 @@ class MarketApiService {
       'name': name,
       'address': address,
       'phone': phone,
-      if (description != null) 'description': description,
+      'description': ?description,
     };
 
     final stopwatch = Stopwatch()..start();
@@ -290,11 +290,11 @@ class MarketApiService {
       'description': description,
       'original_price': originalPrice,
       'discount_price': discountPrice,
-      if (categoryId != null) 'category': categoryId,
-      if (color != null) 'color': color,
-      if (model != null) 'model': model,
-      if (features != null) 'features': features,
-      if (advantages != null) 'advantages': advantages,
+      'category': ?categoryId,
+      'color': ?color,
+      'model': ?model,
+      'features': ?features,
+      'advantages': ?advantages,
     };
     final headers = {
       'Authorization': 'Bearer $token',

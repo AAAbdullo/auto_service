@@ -138,6 +138,7 @@ class ApiLogger {
   /// Pretty print JSON body
   static void _logBody(dynamic body) {
     try {
+      dynamic dataToPrint;
       if (body is String) {
         // Skip logging HTML responses (likely Django error pages)
         if (body.contains('<html') || body.contains('<!DOCTYPE')) {
@@ -153,37 +154,64 @@ class ApiLogger {
               }
             }
           } catch (_) {}
-          
-          debugPrint('[HTML Response - check Django server console for details]');
+
+          debugPrint(
+            '[HTML Response - check Django server console for details]',
+          );
           return;
         }
-        
+
         // Truncate very large responses
         if (body.length > 5000) {
-          debugPrint('${body.substring(0, 5000)}...\n[Response truncated - total length: ${body.length} bytes]');
+          debugPrint(
+            '${body.substring(0, 5000)}...\n[Response truncated - total length: ${body.length} bytes]',
+          );
           return;
         }
-        
+
         // Try to parse as JSON for pretty printing
         try {
-          final decoded = jsonDecode(body);
-          final prettyJson = const JsonEncoder.withIndent(
-            '  ',
-          ).convert(decoded);
-          debugPrint(prettyJson);
+          dataToPrint = jsonDecode(body);
         } catch (_) {
           // Not JSON, print as is
           debugPrint(body);
+          return;
         }
       } else if (body is Map || body is List) {
-        final prettyJson = const JsonEncoder.withIndent('  ').convert(body);
-        debugPrint(prettyJson);
+        dataToPrint = body;
       } else {
         debugPrint(body.toString());
+        return;
       }
+
+      final maskedData = _maskSensitiveData(dataToPrint);
+      final prettyJson = const JsonEncoder.withIndent('  ').convert(maskedData);
+      debugPrint(prettyJson);
     } catch (e) {
       debugPrint('Failed to log body: $e');
     }
+  }
+
+  /// Mask sensitive fields like password
+  static dynamic _maskSensitiveData(dynamic data) {
+    if (data is Map) {
+      final maskedMap = <dynamic, dynamic>{};
+      data.forEach((key, value) {
+        final keyStr = key.toString().toLowerCase();
+        if (keyStr.contains('password') ||
+            keyStr.contains('token') ||
+            keyStr == 'refresh' ||
+            keyStr == 'access') {
+          maskedMap[key] = '********';
+        } else {
+          maskedMap[key] = _maskSensitiveData(value);
+        }
+      });
+      return maskedMap;
+    } else if (data is List) {
+      return data.map((item) => _maskSensitiveData(item)).toList();
+    }
+    return data;
   }
 
   /// Get human-readable status text

@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/Users/marcus/Downloads/flutter"
-export "FLUTTER_APPLICATION_PATH=/Users/marcus/Documents/auto_service_app/plugins/yandex_mapkit/yandex_mapkit-4.2.1/example"
+export "FLUTTER_APPLICATION_PATH=/Users/marcus/auto_service_app/plugins/yandex_mapkit/yandex_mapkit-4.2.1/example"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"

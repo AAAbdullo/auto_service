@@ -17,4 +17,14 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         // MapKit API key устанавливается в MainApplication.onCreate()
     }
+
+    override fun onStart() {
+        super.onStart()
+        MapKitFactory.getInstance().onStart()
+    }
+
+    override fun onStop() {
+        MapKitFactory.getInstance().onStop()
+        super.onStop()
+    }
 }

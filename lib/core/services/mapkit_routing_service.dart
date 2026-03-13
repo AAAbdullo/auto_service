@@ -75,7 +75,6 @@ class MapKitRoutingService {
     }
   }
 
-  /// Построение автомобильного маршрута
   static Future<RouteResult?> _buildDrivingRoute(
     Point startPoint,
     Point endPoint,
@@ -89,7 +88,7 @@ class MapKitRoutingService {
       );
 
       if (result == null) {
-        debugPrint('❌ Не удалось построить маршрут');
+        debugPrint('⚠️ Native SDK вернул null. Маршрут не построен.');
         return null;
       }
 
@@ -101,8 +100,11 @@ class MapKitRoutingService {
       debugPrint('   Время: ${routeResult.formattedDuration}');
 
       return routeResult;
+    } on TimeoutException {
+      debugPrint('⏱️ Native SDK timeout. Не удалось построить маршрут.');
+      return null;
     } catch (e) {
-      debugPrint('❌ Ошибка при построении маршрута через Native SDK: $e');
+      debugPrint('❌ Ошибка Native SDK: $e');
       return null;
     }
   }
@@ -162,9 +164,20 @@ class MapKitRoutingService {
       debugPrint('   Время: ${routeResult.formattedDuration}');
 
       return routeResult;
+    } on TimeoutException {
+      debugPrint(
+        '⏱️ Bicycle SDK timeout — используем HTTP API как fallback...',
+      );
+      return await YandexRouterApiService.buildWalkingRoute(
+        startPoint: startPoint,
+        endPoint: endPoint,
+      );
     } catch (e) {
       debugPrint('❌ Ошибка при построении пешеходного маршрута: $e');
-      return null;
+      return await YandexRouterApiService.buildWalkingRoute(
+        startPoint: startPoint,
+        endPoint: endPoint,
+      );
     }
   }
 
