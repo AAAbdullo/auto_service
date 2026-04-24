@@ -2,6 +2,7 @@ import 'package:auto_service/core/utils/validators.dart';
 import 'package:auto_service/data/datasources/local/local_storage.dart';
 import 'package:auto_service/data/datasources/repositories/auth_repositories.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -40,7 +41,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     if (_newPasswordController.text != _confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Пароли не совпадают'),
+          content: Text('val_pass_match'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -65,7 +66,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       // Success - show message and go back to login
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Пароль успешно изменен! Войдите с новым паролем'),
+          content: Text('password_changed_success'.tr()),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
         ),
@@ -77,7 +78,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       // Error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка изменения пароля. Попробуйте еще раз'),
+          content: Text('password_change_error'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -89,7 +90,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Новый пароль'), centerTitle: true),
+      appBar: AppBar(title: Text('new_password'.tr()), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -106,7 +107,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Создайте новый пароль',
+                  'create_new_password'.tr(),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -116,7 +117,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Введите новый пароль для вашего аккаунта',
+                  'enter_new_password'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     color: theme.textTheme.bodyMedium?.color,
@@ -132,7 +133,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   validator: Validators.validatePassword,
                   style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
-                    labelText: 'Новый пароль',
+                    labelText: 'new_password'.tr(),
                     prefixIcon: Icon(
                       Icons.lock,
                       color: theme.iconTheme.color ?? Colors.grey,
@@ -174,7 +175,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                   ),
                   style: TextStyle(color: theme.textTheme.bodyLarge?.color),
                   decoration: InputDecoration(
-                    labelText: 'Подтвердите пароль',
+                    labelText: 'confirm_password'.tr(),
                     prefixIcon: Icon(
                       Icons.lock_outline,
                       color: theme.iconTheme.color ?? Colors.grey,
@@ -221,7 +222,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Пароль должен содержать минимум 4 символа',
+                          'val_pass_min_4'.tr(),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.blue[700],
@@ -254,7 +255,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             ),
                           )
                         : Text(
-                            'Изменить пароль',
+                            'change_password'.tr(),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

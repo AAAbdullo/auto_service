@@ -63,21 +63,18 @@ class ServicesScreenState extends State<ServicesScreen> {
       final allServices = await AutoServicesRepository().getAllServices();
       debugPrint('✅ Loaded ${allServices.length} services (base list)');
 
-      // 2. Параллельно (или после) пытаемся получить локацию для сортировки
+      // 2. Optionally sort by distance if location is already granted — but
+      //    NEVER replace the full list with a radius-filtered subset, because
+      //    the /nearest/ endpoint drops services outside the radius entirely.
       List<AutoServiceModel> sortedServices = allServices;
 
       try {
         LocationPermission permission = await Geolocator.checkPermission();
-        // REMOVED: permission request. We only use location if already granted by Home/Main screen.
-        // if (permission == LocationPermission.denied) {
-        //   permission = await Geolocator.requestPermission();
-        // }
 
         if (permission == LocationPermission.always ||
             permission == LocationPermission.whileInUse) {
-          // Пробуем быстро получить кэш
+          // Try cached position first (fast), fallback to live GPS
           Position? position = await Geolocator.getLastKnownPosition();
-          // Если нет кэша, пробуем GPS (увеличил таймаут до 10с)
           position ??= await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.low,
             timeLimit: const Duration(seconds: 10),
@@ -86,25 +83,32 @@ class ServicesScreenState extends State<ServicesScreen> {
           debugPrint(
             '📍 Got location: ${position.latitude}, ${position.longitude}',
           );
-          // Если локация есть, пробуем получить "ближайшие" с API
-          try {
-            final nearest = await AutoServicesRepository().getNearestServices(
-              lat: position.latitude,
-              lon: position.longitude,
-              radius: 50000, // 50 km
-            );
-            if (nearest.isNotEmpty) {
-              sortedServices = nearest;
-              debugPrint('✅ Switched to nearest services (${nearest.length})');
-            }
-          } catch (e) {
-            debugPrint(
-              '⚠️ Nearest API failed, keeping all services list. Error: $e',
-            );
-          }
+
+          // Sort ALL services by straight-line distance from user — this keeps
+          // ALL 10 services while putting nearby ones first in the list.
+          sortedServices = List.from(allServices)
+            ..sort((a, b) {
+              final distA = Geolocator.distanceBetween(
+                position!.latitude,
+                position.longitude,
+                a.latitude,
+                a.longitude,
+              );
+              final distB = Geolocator.distanceBetween(
+                position.latitude,
+                position.longitude,
+                b.latitude,
+                b.longitude,
+              );
+              return distA.compareTo(distB);
+            });
+
+          debugPrint(
+            '✅ Sorted ${sortedServices.length} services by distance from user',
+          );
         }
       } catch (e) {
-        debugPrint('⚠️ Location check failed (passive): $e');
+        debugPrint('⚠️ Location sort failed (passive): $e');
       }
 
       if (!mounted) return;

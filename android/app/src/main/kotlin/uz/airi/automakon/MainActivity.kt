@@ -5,6 +5,7 @@ import io.flutter.embedding.engine.FlutterEngine
 import androidx.annotation.NonNull
 import androidx.core.view.WindowCompat
 import android.os.Bundle
+import com.yandex.mapkit.MapKitFactory
 
 class MainActivity : FlutterActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {

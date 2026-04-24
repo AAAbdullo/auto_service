@@ -2,6 +2,7 @@ import 'package:auto_service/core/utils/validators.dart';
 import 'package:auto_service/data/datasources/local/local_storage.dart';
 import 'package:auto_service/data/datasources/repositories/auth_repositories.dart';
 import 'package:auto_service/presentation/screens/auth/verify_otp_screen.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -45,7 +46,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Success - navigate to OTP screen
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Код отправлен на ${result['email'] ?? email}'),
+          content: Text('code_sent_success'.tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -60,7 +61,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       // Error
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка: проверьте email и номер телефона'),
+          content: Text('error_check_email_phone'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -72,7 +73,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Восстановление пароля'), centerTitle: true),
+      appBar: AppBar(title: Text('password_recovery'.tr()), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -89,7 +90,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 32),
                 Text(
-                  'Забыли пароль?',
+                  'forgot_password'.tr(),
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
@@ -99,7 +100,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Введите ваш номер телефона и email для подтверждения',
+                  'forgot_password_desc'.tr(),
                   style: TextStyle(
                     fontSize: 16,
                     color: theme.textTheme.bodyMedium?.color,
@@ -205,7 +206,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Код будет отправлен на указанный email',
+                          'code_will_be_sent'.tr(),
                           style: TextStyle(
                             fontSize: 14,
                             color: Colors.blue[700],
@@ -238,7 +239,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                             ),
                           )
                         : Text(
-                            'Отправить код',
+                            'send_code'.tr(),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

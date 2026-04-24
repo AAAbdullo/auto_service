@@ -2,6 +2,7 @@ import 'package:auto_service/data/datasources/local/local_storage.dart';
 import 'package:auto_service/data/datasources/repositories/auth_repositories.dart';
 import 'package:auto_service/presentation/screens/auth/reset_password_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 
@@ -69,7 +70,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
     if (otp.length != 6) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Введите полный код'),
+          content: Text('enter_full_code'.tr()),
           backgroundColor: Colors.orange,
         ),
       );
@@ -101,7 +102,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
       // Invalid OTP
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Неверный код. Попробуйте еще раз'),
+          content: Text('invalid_code_retry'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -128,7 +129,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
     if (result != null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Новый код отправлен'),
+          content: Text('new_code_sent'.tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -136,7 +137,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Ошибка отправки кода'),
+          content: Text('code_send_error'.tr()),
           backgroundColor: Colors.red,
         ),
       );
@@ -148,7 +149,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(title: Text('Подтверждение'), centerTitle: true),
+      appBar: AppBar(title: Text('verification'.tr()), centerTitle: true),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -163,7 +164,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
               ),
               const SizedBox(height: 32),
               Text(
-                'Введите код',
+                'enter_code'.tr(),
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -173,7 +174,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
               ),
               const SizedBox(height: 8),
               Text(
-                'Мы отправили 6-значный код на\n${widget.email}',
+                '${'code_sent_to_prefix'.tr()} \n${widget.email}',
                 style: TextStyle(
                   fontSize: 16,
                   color: theme.textTheme.bodyMedium?.color,
@@ -199,8 +200,10 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                         fontWeight: FontWeight.bold,
                         color: theme.textTheme.bodyLarge?.color,
                       ),
+                      textAlignVertical: TextAlignVertical.center,
                       inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 16),
                         counterText: '',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -254,7 +257,7 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                           ),
                         )
                       : Text(
-                          'Подтвердить',
+                          'confirm'.tr(),
                           style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
@@ -270,8 +273,8 @@ class _VerifyOTPScreenState extends State<VerifyOTPScreen> {
                 onPressed: _canResend && !_isLoading ? _resendOTP : null,
                 child: Text(
                   _canResend
-                      ? 'Отправить код повторно'
-                      : 'Повторная отправка через $_resendCountdown сек',
+                      ? 'resend_code'.tr()
+                      : '${'resend_in'.tr()} $_resendCountdown ${'sec'.tr()}',
                   style: TextStyle(
                     color: _canResend
                         ? theme.colorScheme.primary

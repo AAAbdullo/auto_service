@@ -102,9 +102,6 @@ class MapKitDrivingService {
       debugPrint('');
       debugPrint('🔄 Отправка запроса в Yandex MapKit...');
 
-      // Создаем Completer для async/await работы
-      final completer = Completer<DrivingResultWithSession?>();
-
       // Отправляем запрос
       final resultWithSession = await YandexDriving.requestRoutes(
         points: requestPoints,
@@ -129,8 +126,7 @@ class MapKitDrivingService {
           },
         );
 
-        _handleDrivingResult(result, completer);
-        final finalResult = await completer.future;
+        final finalResult = _handleDrivingResult(result);
 
         // Закрываем сессию после получения результата
         session.close();
@@ -154,9 +150,8 @@ class MapKitDrivingService {
   }
 
   /// Обработка результата построения маршрута
-  static void _handleDrivingResult(
+  static DrivingResultWithSession? _handleDrivingResult(
     DrivingSessionResult result,
-    Completer<DrivingResultWithSession?> completer,
   ) {
     debugPrint('');
     debugPrint('📥 ПОЛУЧЕН ОТВЕТ ОТ YANDEX MAPKIT');
@@ -165,15 +160,13 @@ class MapKitDrivingService {
       debugPrint('❌ ОШИБКА ОТ СЕРВЕРА:');
       debugPrint('   ${result.error}');
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      completer.complete(null);
-      return;
+      return null;
     }
 
     if (result.routes == null || result.routes!.isEmpty) {
       debugPrint('⚠️ Маршруты не найдены (пустой список)');
       debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      completer.complete(null);
-      return;
+      return null;
     }
 
     final routes = result.routes!;
@@ -235,9 +228,7 @@ class MapKitDrivingService {
     debugPrint('✅ МАРШРУТ УСПЕШНО ПОСТРОЕН!');
     debugPrint('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
-    completer.complete(
-      DrivingResultWithSession(routes: routes, session: result),
-    );
+    return DrivingResultWithSession(routes: routes, session: result);
   }
 
   /// Вычисляет расстояние между двумя координатами (формула гаверсинусов)

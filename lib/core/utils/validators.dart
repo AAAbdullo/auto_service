@@ -1,39 +1,41 @@
+import 'package:easy_localization/easy_localization.dart';
+
 class Validators {
   static String? validatePhone(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Telefon raqamni kiriting';
+      return 'val_phone_req'.tr();
     }
     if (value.length < 9) {
-      return "Telefon raqam to'liq emas";
+      return 'val_phone_inc'.tr();
     }
     return null;
   }
 
   static String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Parolni kiriting';
+      return 'val_pass_req'.tr();
     }
     if (value.length < 4) {
-      return 'Parol kamida 6 belgidan iborat bo\'lishi kerak';
+      return 'val_pass_len'.tr();
     }
     return null;
   }
 
   static String? validateConfirmPassword(String? value, String password) {
     if (value != password) {
-      return 'Parollar mos emas';
+      return 'val_pass_match'.tr();
     }
     return null;
   }
 
   static String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Email kiriting';
+      return 'val_email_req'.tr();
     }
     // Simple email regex
     final emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
     if (!emailRegex.hasMatch(value)) {
-      return 'Noto\'g\'ri email format';
+      return 'val_email_inv'.tr();
     }
     return null;
   }

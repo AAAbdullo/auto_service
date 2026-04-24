@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:auto_service/presentation/providers/language_provider.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -66,6 +67,24 @@ class _LoginScreenState extends State<LoginScreen> {
         title: Text('login_title'.tr()),
         centerTitle: true,
         automaticallyImplyLeading: false,
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.language),
+            onSelected: (String code) {
+              context.read<LanguageProvider>().setLanguage(context, code);
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              const PopupMenuItem<String>(
+                value: 'ru',
+                child: Text('Русский'),
+              ),
+              const PopupMenuItem<String>(
+                value: 'uz',
+                child: Text("O'zbekcha"),
+              ),
+            ],
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -215,7 +234,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     child: Text(
-                      'Забыли пароль?',
+                      'forgot_password'.tr(),
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w500,

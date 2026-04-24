@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 /// Unified search bar with text field and action buttons
 class UnifiedSearchBar extends StatefulWidget {
@@ -79,7 +80,7 @@ class _UnifiedSearchBarState extends State<UnifiedSearchBar> {
               onChanged: widget.onSearchChanged,
               style: const TextStyle(fontSize: 15),
               decoration: InputDecoration(
-                hintText: widget.hintText ?? 'Поиск сервисов...',
+                hintText: widget.hintText ?? 'search_hint'.tr(),
                 hintStyle: TextStyle(
                   color: isDark ? Colors.grey[500] : Colors.grey[600],
                   fontSize: 15,

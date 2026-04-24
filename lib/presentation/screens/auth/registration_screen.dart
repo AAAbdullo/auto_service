@@ -68,7 +68,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
       // Show success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Регистрация успешна! Войдите с вашими данными'),
+          content: Text('register_success_login'.tr()),
           backgroundColor: Colors.green,
           duration: const Duration(seconds: 3),
         ),
