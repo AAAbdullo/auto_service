@@ -74,7 +74,10 @@ class ServicesScreenState extends State<ServicesScreen> {
         if (permission == LocationPermission.always ||
             permission == LocationPermission.whileInUse) {
           // Try cached position first (fast), fallback to live GPS
-          Position? position = await Geolocator.getLastKnownPosition();
+          Position? position = await Geolocator.getLastKnownPosition().timeout(
+            const Duration(seconds: 2),
+            onTimeout: () => null,
+          );
           position ??= await Geolocator.getCurrentPosition(
             desiredAccuracy: LocationAccuracy.low,
             timeLimit: const Duration(seconds: 10),

@@ -254,13 +254,19 @@ class ServiceImage {
 
   /// Получить полный URL изображения
   String getFullImageUrl() {
-    const baseUrl = 'http://avtomakon.airi.uz';
+    const baseUrl = 'https://avtomakon.airi.uz';
 
-    // Приоритет: imageUrl > image
-    final url = imageUrl ?? image;
+    // Приоритет: image (обычно полный URL) > imageUrl
+    final url = image.isNotEmpty ? image : (imageUrl ?? '');
+
+    if (url.isEmpty) return '';
 
     // Если URL уже полный (начинается с http), возвращаем как есть
     if (url.startsWith('http://') || url.startsWith('https://')) {
+      // Желательно использовать https
+      if (url.startsWith('http://')) {
+        return url.replaceFirst('http://', 'https://');
+      }
       return url;
     }
 

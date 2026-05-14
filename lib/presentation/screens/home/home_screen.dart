@@ -534,7 +534,10 @@ class HomeScreenState extends State<HomeScreen> {
       // 1. Сразу пробуем получить последнее известное местоположение (это быстро)
       Position? lastKnownPosition;
       try {
-        lastKnownPosition = await Geolocator.getLastKnownPosition();
+        debugPrint("⏳ Запрос LastKnownPosition...");
+        lastKnownPosition = await Geolocator.getLastKnownPosition().timeout(
+          const Duration(seconds: 2),
+        );
         if (lastKnownPosition != null && mounted) {
           debugPrint('📍 Найдено последнее известное местоположение');
           setState(() {
