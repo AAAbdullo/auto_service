@@ -8,10 +8,10 @@ allprojects {
     }
 }
 
-rootProject.buildDir = file("../build")
+rootProject.layout.buildDirectory.set(rootProject.file("../build"))
 
 subprojects {
-    project.buildDir = file("${rootProject.buildDir}/${project.name}")
+    project.layout.buildDirectory.set(rootProject.file("../build/${project.name}"))
 }
 
 subprojects {
